@@ -157,3 +157,16 @@ video.camera-feed {
 .confidence-high { background-color: #10b981; }
 .confidence-medium { background-color: #f59e0b; }
 .confidence-low { background-color: #ef4444; }
+
+/* Hide Next.js development indicators / badge overlays */
+nextjs-portal,
+[data-nextjs-dev-overlay-portal],
+[data-nextjs-toast],
+[data-nextjs-dev-indicator],
+[data-nextjs-route-announcer],
+div[class*="nextjs-dev-overlay"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

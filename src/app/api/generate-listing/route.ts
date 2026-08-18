@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { scrapIds } = parseResult.data;
+    const { scrapIds: _scrapIds } = parseResult.data;
 
     // Get scrap details from body if provided (to avoid DB query from API route)
     interface ScrapInfo { material_name: string; weight_kg: number; total_value: number }
