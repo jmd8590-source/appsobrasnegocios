@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Package, Search, Filter, Camera, PenSquare, Pencil, Trash2, ChevronDown } from 'lucide-react';
