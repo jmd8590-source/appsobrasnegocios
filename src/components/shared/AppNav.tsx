@@ -1,16 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Camera, Layers, LogOut, Zap } from 'lucide-react';
+import { LayoutDashboard, Package, Camera, PenSquare, Layers, LogOut, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
   { href: '/inventory', icon: Package, label: 'Inventario' },
   { href: '/scanner', icon: Camera, label: 'Escanear', primary: true },
+  { href: '/manual-entry', icon: PenSquare, label: 'Entrar a mano' },
   { href: '/lots', icon: Layers, label: 'Lotes' },
 ];
 

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Camera, TrendingUp, Package, Layers, Weight, ArrowRight, Clock, Zap } from 'lucide-react';
+import { Camera, PenSquare, TrendingUp, Package, Layers, Weight, ArrowRight, Clock, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -89,12 +89,20 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-slate-100">Dashboard</h1>
           <p className="text-sm text-slate-400 mt-0.5">Resumen de tu actividad de recuperación</p>
         </div>
-        <Link href="/scanner">
-          <Button variant="amber" size="sm" className="gap-2 hidden sm:inline-flex">
-            <Camera className="w-4 h-4" />
-            Escanear
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/manual-entry">
+            <Button variant="outline" size="sm" className="gap-2 border-slate-700 text-slate-300 hover:text-amber-400 hover:border-amber-500/50">
+              <PenSquare className="w-4 h-4 text-amber-400" />
+              Entrar a mano
+            </Button>
+          </Link>
+          <Link href="/scanner">
+            <Button variant="amber" size="sm" className="gap-2">
+              <Camera className="w-4 h-4" />
+              Escanear
+            </Button>
+          </Link>
+        </div>
       </div>
 
 

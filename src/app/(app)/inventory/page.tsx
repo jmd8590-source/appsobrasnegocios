@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Package, Search, Filter, Camera, Pencil, Trash2, ChevronDown } from 'lucide-react';
+import { Package, Search, Filter, Camera, PenSquare, Pencil, Trash2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -69,12 +69,20 @@ export default function InventoryPage() {
             {filtered.length} sobrante{filtered.length !== 1 ? 's' : ''} · {formatCurrency(totalFilteredValue)} valor total
           </p>
         </div>
-        <Link href="/scanner">
-          <Button variant="amber" size="sm">
-            <Camera className="w-4 h-4 mr-2" />
-            Nuevo
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/manual-entry">
+            <Button variant="outline" size="sm" className="gap-2 border-slate-700 text-slate-300 hover:text-amber-400 hover:border-amber-500/50">
+              <PenSquare className="w-4 h-4 text-amber-400" />
+              Entrar a mano
+            </Button>
+          </Link>
+          <Link href="/scanner">
+            <Button variant="amber" size="sm">
+              <Camera className="w-4 h-4 mr-2" />
+              Escanear
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}

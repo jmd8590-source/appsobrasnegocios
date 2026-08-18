@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import Webcam from 'react-webcam';
-import { Camera, RotateCcw, Upload, Zap, AlertCircle, Loader2, Info, RefreshCw } from 'lucide-react';
+import { Camera, RotateCcw, Upload, Zap, AlertCircle, Loader2, Info, RefreshCw, PenSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
@@ -111,14 +112,22 @@ export default function ScannerPage() {
     <div className="min-h-screen bg-slate-950 flex flex-col fade-in">
       {/* Header */}
       <div className="px-4 pt-6 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
-            <Camera className="w-5 h-5 text-amber-400" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+              <Camera className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-100">Escáner</h1>
+              <p className="text-xs text-slate-500">Fotografía el material para identificarlo</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-100">Escáner IA</h1>
-            <p className="text-xs text-slate-500">Fotografía el material para identificarlo</p>
-          </div>
+          <Link href="/manual-entry">
+            <Button variant="outline" size="sm" className="gap-2 text-xs border-slate-700 text-slate-300 hover:text-amber-400 hover:border-amber-500/50">
+              <PenSquare className="w-3.5 h-3.5 text-amber-400" />
+              Entrar a mano
+            </Button>
+          </Link>
         </div>
 
         {/* Steps indicator */}
