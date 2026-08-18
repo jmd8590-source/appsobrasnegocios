@@ -19,6 +19,7 @@ import {
   getConfidenceColor,
   getCategoryLabel,
 } from '@/lib/utils';
+import { createScrap } from '@/lib/scraps/service';
 
 interface AnalysisResultFormProps {
   analysis: ScrapAnalysis;
@@ -62,12 +63,25 @@ export function AnalysisResultForm({ analysis, imageData, isDemo, onSaved, onRet
   const onSubmit = async (data: ScrapFormValues) => {
     setIsSaving(true);
     try {
-      // In demo mode, simulate saving
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      // In real mode: save to Supabase
+      await createScrap({
+        material_name: data.material_name,
+        category: data.category,
+        subtype: data.subtype || analysis.subtype,
+        image_url: imageData,
+        image_path: null,
+        material_id: null,
+        weight_kg: Number(data.weight_kg),
+        price_per_kg: Number(data.price_per_kg),
+        total_value: Number(data.total_value),
+        currency: 'EUR',
+        ai_confidence: analysis.confidence_score,
+        condition_notes: data.condition_notes || analysis.condition_notes,
+        reference_object: null,
+        status: data.status,
+      });
       onSaved();
-    } catch {
-      console.error('Error saving scrap');
+    } catch (err) {
+      console.error('Error saving scrap:', err);
     } finally {
       setIsSaving(false);
     }

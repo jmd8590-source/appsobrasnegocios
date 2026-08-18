@@ -32,7 +32,7 @@ import {
 } from '@/lib/pricing/service';
 import { formatCurrency, formatWeight } from '@/lib/utils';
 import type { MaterialCategory, Scrap, ScrapStatus } from '@/types';
-import { createClient } from '@/lib/supabase/client';
+import { createScrap } from '@/lib/scraps/service';
 
 const CATEGORY_NAMES: Record<MaterialCategory, string> = {
   metal: 'Metales & Cables',
@@ -154,47 +154,28 @@ export default function ManualEntryPage() {
     setIsSaving(true);
 
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      const newScrap: Partial<Scrap> = {
+      const savedScrap = await createScrap({
         material_name: currentMaterial.name,
         category: currentMaterial.category,
         subtype: currentMaterial.subtype,
-        weight_kg: unit === 'kg' ? numQuantity : numQuantity, // Store quantity
+        image_url: null,
+        image_path: null,
+        material_id: null,
+        weight_kg: numQuantity,
         price_per_kg: activePrice,
         total_value: totalValue,
         currency: 'EUR',
+        ai_confidence: null,
         condition_notes: conditionNotes.trim() || `${unit === 'ud' ? `${numQuantity} unidades` : `${numQuantity} kg`} entrada manual`,
+        reference_object: null,
         status: status,
-        is_demo: !user,
-      };
+      });
 
-      if (user) {
-        const { error } = await supabase.from('scraps').insert({
-          user_id: user.id,
-          material_name: newScrap.material_name,
-          category: newScrap.category,
-          subtype: newScrap.subtype,
-          weight_kg: newScrap.weight_kg,
-          price_per_kg: newScrap.price_per_kg,
-          total_value: newScrap.total_value,
-          currency: 'EUR',
-          condition_notes: newScrap.condition_notes,
-          status: newScrap.status,
-          is_demo: false,
-        });
-
-        if (error) throw error;
-      }
-
-      setLastSavedScrap(newScrap);
+      setLastSavedScrap(savedScrap);
 
       toast({
         title: '¡Material guardado!',
-        description: `${newScrap.material_name} (${numQuantity} ${unit}) añadido al inventario.`,
+        description: `${savedScrap.material_name} (${numQuantity} ${unit}) añadido al inventario.`,
       });
 
       if (addAnother) {

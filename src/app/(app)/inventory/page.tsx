@@ -1,6 +1,4 @@
-'use client';
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Package, Search, Filter, Camera, PenSquare, Pencil, Trash2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from '@/hooks/use-toast';
 import { DEMO_SCRAPS } from '@/lib/demo/data';
+import { getScraps, removeScrap, updateScrapItem } from '@/lib/scraps/service';
 import type { Scrap, MaterialCategory, ScrapStatus } from '@/types';
 import {
   formatCurrency,
@@ -29,12 +28,25 @@ const CATEGORY_OPTIONS: MaterialCategory[] = ['metal', 'wood', 'plastic', 'const
 
 export default function InventoryPage() {
   const [scraps, setScraps] = useState<Scrap[]>(DEMO_SCRAPS);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [editingScrap, setEditingScrap] = useState<Scrap | null>(null);
   const [deletingScrap, setDeletingScrap] = useState<Scrap | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getScraps();
+        setScraps(data);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   const filtered = scraps.filter((s) => {
     const matchesSearch =
@@ -47,13 +59,24 @@ export default function InventoryPage() {
 
   const totalFilteredValue = filtered.reduce((acc, s) => acc + s.total_value, 0);
 
-  const handleDelete = (scrap: Scrap) => {
+  const handleDelete = async (scrap: Scrap) => {
+    await removeScrap(scrap.id);
     setScraps((prev) => prev.filter((s) => s.id !== scrap.id));
     setDeletingScrap(null);
     toast({ title: 'Sobrante eliminado', description: `${scrap.material_name} eliminado del inventario` });
   };
 
-  const handleSaveEdit = (updated: Scrap) => {
+  const handleSaveEdit = async (updated: Scrap) => {
+    await updateScrapItem(updated.id, {
+      material_name: updated.material_name,
+      category: updated.category,
+      subtype: updated.subtype || undefined,
+      weight_kg: updated.weight_kg,
+      price_per_kg: updated.price_per_kg,
+      total_value: updated.total_value,
+      condition_notes: updated.condition_notes || '',
+      status: updated.status,
+    });
     setScraps((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
     setEditingScrap(null);
     toast({ title: 'Cambios guardados', description: 'Sobrante actualizado correctamente' });

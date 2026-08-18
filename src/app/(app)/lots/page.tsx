@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layers, Plus, Share2, Download, ExternalLink, Zap, Package, CheckSquare, Square, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from '@/hooks/use-toast';
 import { DEMO_SCRAPS, DEMO_LISTINGS } from '@/lib/demo/data';
+import { getScraps } from '@/lib/scraps/service';
 import type { Listing, Scrap } from '@/types';
 import {
   formatCurrency,
@@ -149,10 +150,17 @@ export default function LotsPage() {
 // Create Lot Dialog
 // -------------------------------------------------------
 function CreateLotDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (l: Listing) => void }) {
-  const availableScraps = DEMO_SCRAPS.filter((s) => s.status === 'available');
+  const [allScraps, setAllScraps] = useState<Scrap[]>(DEMO_SCRAPS);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  useEffect(() => {
+    if (open) {
+      getScraps().then(setAllScraps);
+    }
+  }, [open]);
+
+  const availableScraps = allScraps.filter((s) => s.status === 'available');
   const selectedScraps = availableScraps.filter((s) => selectedIds.includes(s.id));
   const totalValue = selectedScraps.reduce((acc, s) => acc + s.total_value, 0);
   const totalWeight = selectedScraps.reduce((acc, s) => acc + s.weight_kg, 0);

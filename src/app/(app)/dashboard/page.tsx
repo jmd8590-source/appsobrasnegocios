@@ -1,7 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Camera, PenSquare, TrendingUp, Package, Layers, Weight, ArrowRight, Clock, Zap } from 'lucide-react';
+import { Camera, PenSquare, TrendingUp, Package, Layers, Weight, ArrowRight, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,13 +12,13 @@ import {
   DEMO_STATS,
   DEMO_CHART_DATA,
 } from '@/lib/demo/data';
+import { getScraps } from '@/lib/scraps/service';
+import type { Scrap } from '@/types';
 import {
   formatCurrency,
   formatWeight,
   formatRelativeTime,
-  getCategoryLabel,
   getStatusLabel,
-  getStatusColor,
 } from '@/lib/utils';
 import {
   AreaChart,
@@ -30,7 +31,6 @@ import {
 } from 'recharts';
 
 const stats = DEMO_STATS;
-const recentScraps = DEMO_SCRAPS.slice(0, 5);
 const chartData = DEMO_CHART_DATA;
 
 const kpiCards = [
@@ -81,6 +81,56 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 }
 
 export default function DashboardPage() {
+  const [scraps, setScraps] = useState<Scrap[]>(DEMO_SCRAPS);
+
+  useEffect(() => {
+    async function loadData() {
+      const data = await getScraps();
+      setScraps(data);
+    }
+    loadData();
+  }, []);
+
+  const totalValue = scraps.reduce((acc, s) => acc + s.total_value, 0);
+  const totalWeight = scraps.reduce((acc, s) => acc + s.weight_kg, 0);
+  const totalCount = scraps.length;
+  const recentScraps = scraps.slice(0, 5);
+
+  const dynamicKpiCards = [
+    {
+      label: 'Valor recuperado',
+      value: formatCurrency(totalValue),
+      icon: TrendingUp,
+      color: 'text-emerald-400',
+      bgColor: 'bg-emerald-500/10 border-emerald-500/20',
+      subtitle: `${scraps.filter((s) => s.status === 'available').length} disponibles`,
+    },
+    {
+      label: 'Sobrantes',
+      value: totalCount.toString(),
+      icon: Package,
+      color: 'text-amber-400',
+      bgColor: 'bg-amber-500/10 border-amber-500/20',
+      subtitle: 'En tu almacén',
+    },
+    {
+      label: 'Peso total',
+      value: formatWeight(totalWeight),
+      icon: Weight,
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-500/10 border-blue-500/20',
+      subtitle: 'Suma de todo el inventario',
+    },
+    {
+      label: 'Lotes activos',
+      value: stats.total_lots.toString(),
+      icon: Layers,
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-500/10 border-purple-500/20',
+      subtitle: 'Listos para compartir',
+    },
+  ];
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto fade-in">
       {/* Header */}
@@ -105,10 +155,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {kpiCards.map((kpi) => (
+        {dynamicKpiCards.map((kpi) => (
           <Card key={kpi.label} className={`border ${kpi.bgColor} card-hover`}>
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-3">
