@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { AnalyzeScrapInputSchema, ScrapAnalysisSchema } from '@/lib/validations/scrap';
 import { getGeminiClient, isGeminiConfigured, GEMINI_MODEL, GEMINI_TIMEOUT_MS, MAX_IMAGE_SIZE_BYTES } from '@/lib/gemini/client';
 import { buildScrapAnalysisPrompt } from '@/lib/gemini/prompts';

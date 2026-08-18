@@ -179,18 +179,20 @@ function CreateLotDialog({ open, onClose, onCreated }: { open: boolean; onClose:
       });
       const data = await res.json();
 
+      const timestamp = new Date().toISOString();
+      const randomSuffix = Math.random().toString(36).substring(2, 9);
       const newListing: Listing = {
-        id: `lot-${Date.now()}`,
+        id: `lot-${randomSuffix}`,
         user_id: 'demo',
         title: data.data?.title ?? 'Lote de materiales de recuperación',
         description: data.data?.description ?? '',
         total_value: totalValue,
         total_weight_kg: totalWeight,
         status: 'draft',
-        share_token: `share-${Date.now()}`,
+        share_token: `share-${randomSuffix}`,
         is_demo: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: timestamp,
+        updated_at: timestamp,
         scraps: selectedScraps,
       };
 

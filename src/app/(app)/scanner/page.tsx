@@ -4,11 +4,9 @@ import { useState, useRef, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import { Camera, RotateCcw, Upload, Zap, AlertCircle, Loader2, Info, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import type { AnalyzeScrapResponse, ReferenceObject, ScrapAnalysis } from '@/types';
-import { imageToBase64 } from '@/lib/utils';
 import { AnalysisResultForm } from '@/components/scanner/AnalysisResultForm';
 
 type ScanStep = 'camera' | 'preview' | 'analyzing' | 'result';

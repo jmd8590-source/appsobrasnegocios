@@ -19,7 +19,6 @@ import {
   getConfidenceColor,
   getCategoryLabel,
 } from '@/lib/utils';
-import { DEMO_SCRAPS } from '@/lib/demo/data';
 
 interface AnalysisResultFormProps {
   analysis: ScrapAnalysis;
