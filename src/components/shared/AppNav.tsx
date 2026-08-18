@@ -19,6 +19,7 @@ export function AppNav() {
   const router = useRouter();
 
   async function handleLogout() {
+    document.cookie = 'scraplens_demo_session=; path=/; max-age=0';
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push('/login');

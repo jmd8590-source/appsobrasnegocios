@@ -46,8 +46,10 @@ export default function LoginPage() {
 
   const handleDemoAccess = async () => {
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
+    document.cookie = 'scraplens_demo_session=true; path=/; max-age=86400';
+    await new Promise((r) => setTimeout(r, 400));
     router.push('/dashboard');
+    router.refresh();
   };
 
   return (
@@ -117,6 +119,17 @@ export default function LoginPage() {
               Entrar
             </Button>
           </form>
+
+          <div className="mt-4 pt-4 border-t border-slate-800">
+            <Button
+              variant="outline"
+              className="w-full text-slate-300 hover:text-slate-100 hover:bg-slate-800"
+              onClick={handleDemoAccess}
+              disabled={isLoading}
+            >
+              Explorar versión demo (sin registro)
+            </Button>
+          </div>
         </div>
 
         <p className="text-center text-sm text-slate-500 mt-5">

@@ -48,12 +48,17 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Demo mode: skip auth check if no Supabase configured
-  const isDemo =
+  // Check demo mode (cookie or env)
+  const isDemoSession =
+    request.cookies.get('scraplens_demo_session')?.value === 'true' ||
+    process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ||
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://your-project.supabase.co';
 
-  if (isDemo) {
+  if (isDemoSession) {
+    if (pathname === '/' && !isPublicRoute) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
     return supabaseResponse;
   }
 
