@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/* =====================================================
+   ScrapLens — Global Styles
+   Design system: slate/neutral base + amber/emerald accents
+   ===================================================== */
+
+@theme {
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  /* Brand colors */
+  --color-brand-amber: #f59e0b;
+  --color-brand-emerald: #10b981;
+  --color-brand-slate: #1e293b;
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0f172a; /* slate-950 */
+  color: #f1f5f9; /* slate-100 */
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Selection */
+::selection {
+  background-color: #f59e0b33;
+  color: #f59e0b;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+/* Glass card effect */
+.glass-card {
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(71, 85, 105, 0.4);
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #1e293b 25%,
+    #334155 50%,
+    #1e293b 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Pulse ring for camera button */
+@keyframes pulseRing {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 2px solid #f59e0b;
+  animation: pulseRing 1.5s ease-out infinite;
+}
+
+/* Category badge colors */
+.badge-metal { @apply bg-amber-500/20 text-amber-400 border border-amber-500/30; }
+.badge-wood { @apply bg-orange-500/20 text-orange-400 border border-orange-500/30; }
+.badge-plastic { @apply bg-blue-500/20 text-blue-400 border border-blue-500/30; }
+.badge-construction { @apply bg-slate-500/20 text-slate-400 border border-slate-500/30; }
+
+/* Status badge colors */
+.badge-available { @apply bg-emerald-500/20 text-emerald-400 border border-emerald-500/30; }
+.badge-in_lot { @apply bg-amber-500/20 text-amber-400 border border-amber-500/30; }
+.badge-sold { @apply bg-blue-500/20 text-blue-400 border border-blue-500/30; }
+.badge-discarded { @apply bg-red-500/20 text-red-400 border border-red-500/30; }
+
+/* Bottom nav safe area */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-1px);
+  border-color: rgba(71, 85, 105, 0.8);
+}
+
+/* Input autofill fix for dark mode */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f1f5f9;
+  -webkit-box-shadow: 0 0 0px 1000px #1e293b inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Camera video element */
+video.camera-feed {
+  object-fit: cover;
+  border-radius: 0.75rem;
+}
+
+/* Confidence bar colors */
+.confidence-high { background-color: #10b981; }
+.confidence-medium { background-color: #f59e0b; }
+.confidence-low { background-color: #ef4444; }

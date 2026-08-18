@@ -1,0 +1,38 @@
+{
+  "name": "ScrapLens",
+  "short_name": "ScrapLens",
+  "description": "Identifica y valora materiales industriales de recuperación con IA",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "categories": ["business", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Escanear material",
+      "url": "/scanner",
+      "description": "Fotografía un material para analizarlo"
+    },
+    {
+      "name": "Inventario",
+      "url": "/inventory",
+      "description": "Ver tus sobrantes registrados"
+    }
+  ]
+}
