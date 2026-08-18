@@ -56,7 +56,7 @@ export default function RegisterPage() {
             <Zap className="w-8 h-8 text-slate-950" />
           </div>
           <h1 className="text-2xl font-bold text-slate-100">ScrapLens</h1>
-          <p className="text-sm text-slate-400 mt-1">Crea tu cuenta gratuita</p>
+          <p className="text-sm text-slate-400 mt-1">Gestión de materiales de recuperación</p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">

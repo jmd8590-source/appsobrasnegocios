@@ -36,7 +36,6 @@ export function AppNav() {
           </div>
           <div>
             <span className="font-bold text-lg text-slate-100">ScrapLens</span>
-            <p className="text-xs text-slate-500">Industrial AI</p>
           </div>
         </div>
 
@@ -61,9 +60,6 @@ export function AppNav() {
               >
                 <item.icon className={cn('w-5 h-5', item.primary && !isActive && 'text-amber-400')} />
                 {item.label}
-                {item.primary && (
-                  <span className="ml-auto text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">IA</span>
-                )}
               </Link>
             );
           })}

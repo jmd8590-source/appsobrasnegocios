@@ -258,7 +258,7 @@ function CreateLotDialog({ open, onClose, onCreated }: { open: boolean; onClose:
 
           <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
             <Zap className="w-4 h-4 text-amber-400 shrink-0" />
-            <p className="text-xs text-amber-200">La IA generará automáticamente un título y descripción comercial para el lote.</p>
+            <p className="text-xs text-slate-400">Se generará automáticamente un título y descripción comercial para el lote.</p>
           </div>
         </div>
 
@@ -268,7 +268,7 @@ function CreateLotDialog({ open, onClose, onCreated }: { open: boolean; onClose:
             {isGenerating ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generando...</>
             ) : (
-              <><Zap className="w-4 h-4 mr-2" />Crear con IA</>
+              <><Zap className="w-4 h-4 mr-2" />Crear lote</>
             )}
           </Button>
         </DialogFooter>

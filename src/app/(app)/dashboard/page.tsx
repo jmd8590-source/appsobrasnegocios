@@ -97,13 +97,6 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* Demo mode banner */}
-      <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 flex items-center gap-3">
-        <Zap className="w-4 h-4 text-amber-400 shrink-0" />
-        <p className="text-sm text-amber-300">
-          <span className="font-semibold">Modo demo activo</span> — Datos de ejemplo para explorar la aplicación. Configura Supabase y Gemini en <code className="text-xs bg-slate-800 px-1 py-0.5 rounded">.env.local</code> para activar el modo real.
-        </p>
-      </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

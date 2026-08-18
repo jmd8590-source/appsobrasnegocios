@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Save, RotateCcw, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { Save, RotateCcw, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -108,22 +108,13 @@ export function AnalysisResultForm({ analysis, imageData, isDemo, onSaved, onRet
         </div>
       </div>
 
-      {/* Demo / disclaimer banner */}
-      {isDemo ? (
-        <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
-          <Info className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-          <p className="text-xs text-amber-200">
-            <strong>Modo demo:</strong> Resultado simulado para demostración. Conecta Gemini API para análisis real.
-          </p>
-        </div>
-      ) : (
-        <div className="flex items-start gap-2 p-3 rounded-xl bg-slate-900 border border-slate-700">
-          <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-          <p className="text-xs text-slate-400">
-            <strong className="text-slate-300">Estimación orientativa.</strong> Los pesos, precios y valores son aproximaciones generadas por IA. Verifica antes de usar como referencia comercial.
-          </p>
-        </div>
-      )}
+      {/* Disclaimer banner */}
+      <div className="flex items-start gap-2 p-3 rounded-xl bg-slate-900 border border-slate-700">
+        <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+        <p className="text-xs text-slate-400">
+          <strong className="text-slate-300">Estimación orientativa.</strong> Los pesos, precios y valores son aproximaciones calculadas automáticamente. Verifica antes de usar como referencia comercial.
+        </p>
+      </div>
 
       {/* Value summary */}
       <div className="grid grid-cols-3 gap-3">

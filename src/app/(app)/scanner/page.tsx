@@ -257,7 +257,7 @@ export default function ScannerPage() {
               </Button>
               <Button variant="amber" onClick={handleAnalyze} className="flex-1">
                 <Zap className="w-4 h-4 mr-2" />
-                Analizar con IA
+                Analizar
               </Button>
             </div>
           </div>

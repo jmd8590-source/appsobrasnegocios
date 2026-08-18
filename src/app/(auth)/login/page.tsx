@@ -59,7 +59,7 @@ export default function LoginPage() {
             <Zap className="w-8 h-8 text-slate-950" />
           </div>
           <h1 className="text-2xl font-bold text-slate-100">ScrapLens</h1>
-          <p className="text-sm text-slate-400 mt-1">Industrial AI — Gestión de recuperación</p>
+          <p className="text-sm text-slate-400 mt-1">Gestión de materiales de recuperación</p>
         </div>
 
         {/* Form card */}
@@ -117,12 +117,6 @@ export default function LoginPage() {
               Entrar
             </Button>
           </form>
-
-          <div className="mt-4 pt-4 border-t border-slate-800">
-            <Button variant="outline" className="w-full" onClick={handleDemoAccess} disabled={isLoading}>
-              🎯 Acceso demo (sin registro)
-            </Button>
-          </div>
         </div>
 
         <p className="text-center text-sm text-slate-500 mt-5">
