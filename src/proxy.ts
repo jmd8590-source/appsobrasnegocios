@@ -4,7 +4,7 @@ import type { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 
 type CookieToSet = { name: string; value: string; options?: Partial<ResponseCookie> };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
