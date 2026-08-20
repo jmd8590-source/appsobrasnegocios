@@ -4,7 +4,7 @@
 
 ![ScrapLens](https://img.shields.io/badge/ScrapLens-v0.1.0-amber?style=for-the-badge)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES2022-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=for-the-badge&logo=tailwindcss)
 ![Supabase](https://img.shields.io/badge/Supabase-green?style=for-the-badge&logo=supabase)
 ![Cloudflare](https://img.shields.io/badge/Cloudflare_Workers-orange?style=for-the-badge&logo=cloudflare)
@@ -35,7 +35,7 @@ ScrapLens permite a operarios industriales **fotografiar restos de materiales** 
 | Capa | Tecnología |
 |------|-----------|
 | Framework | Next.js 16+ App Router |
-| Lenguaje | TypeScript 5 (strict) |
+| Lenguaje | JavaScript (ES2022 / JSX) |
 | Estilos | Tailwind CSS v4 |
 | Componentes | shadcn/ui (Radix UI) + Lucide React |
 | IA | Gemini 2.0 Flash (`@google/genai`) |
