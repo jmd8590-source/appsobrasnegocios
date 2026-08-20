@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "opennextjs-cloudflare build",
+    "build:next": "next build",
+    "build:cf": "opennextjs-cloudflare build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "build:cf": "npx @opennextjs/cloudflare build",
-    "deploy": "npx wrangler deploy",
-    "preview:cf": "npx @opennextjs/cloudflare build && npx wrangler dev"
+    "deploy": "wrangler deploy",
+    "preview:cf": "opennextjs-cloudflare build && wrangler dev"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",

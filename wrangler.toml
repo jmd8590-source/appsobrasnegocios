@@ -7,17 +7,5 @@ compatibility_flags = ["nodejs_compat"]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
-[vars]
-NEXT_PUBLIC_APP_URL = "https://scraplens.workers.dev"
-
-# Uncomment and fill in for production:
-# [secrets]
-# GEMINI_API_KEY = ""
-# SUPABASE_SERVICE_ROLE_KEY = ""
-
-[[kv_namespaces]]
-binding = "CACHE"
-id = "your-kv-namespace-id"
-
 [build]
-command = "npm run build:cf"
+command = "npm run build"
