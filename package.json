@@ -10,8 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "deploy": "wrangler deploy",
-    "preview:cf": "opennextjs-cloudflare build && wrangler dev"
+    "deploy": "opennextjs-cloudflare deploy",
+    "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",
