@@ -1,6 +1,14 @@
+import { redirect } from 'next/navigation';
 import { AppNav } from '@/components/shared/AppNav';
+import { getAuthState } from '@/lib/auth/session';
 
-export default function AppLayout({ children }) {
+export default async function AppLayout({ children }) {
+  const { user, isDemoSession } = await getAuthState();
+
+  if (!isDemoSession && !user) {
+    redirect('/login');
+  }
+
   return (
     <div className="min-h-screen bg-slate-950">
       <AppNav />
