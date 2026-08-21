@@ -81,6 +81,26 @@ export function AppNav() {
         </div>
       </aside>
 
+      {/* Mobile top header with logo and logout */}
+      <header className="lg:hidden sticky top-0 z-30 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+        <Link href="/dashboard" className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/20">
+            <Zap className="w-4 h-4 text-slate-950" />
+          </div>
+          <span className="font-bold text-base text-slate-100">ScrapLens</span>
+        </Link>
+
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 active:bg-red-500/20 border border-slate-800 transition-all cursor-pointer"
+          title="Cerrar sesión"
+          aria-label="Cerrar sesión"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Salir</span>
+        </button>
+      </header>
+
       {/* Mobile bottom navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 safe-bottom">
         <div className="flex items-center justify-around px-2 py-2">
