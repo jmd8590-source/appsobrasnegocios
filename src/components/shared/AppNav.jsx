@@ -5,6 +5,7 @@ import { LayoutDashboard, Package, Camera, PenSquare, Layers, LogOut, Zap } from
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
+import { isDemoMode } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
@@ -20,8 +21,10 @@ export function AppNav() {
 
   async function handleLogout() {
     document.cookie = 'scraplens_demo_session=; path=/; max-age=0';
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    if (!isDemoMode()) {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    }
     router.push('/login');
     router.refresh();
   }

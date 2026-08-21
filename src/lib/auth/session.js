@@ -10,10 +10,17 @@ export async function getAuthState() {
   const isDemoSession =
     cookieStore.get('scraplens_demo_session')?.value === 'true' || isDemoMode();
 
+  // Skip Supabase entirely in demo mode: with no (or a placeholder)
+  // NEXT_PUBLIC_SUPABASE_URL, the client throws synchronously instead of
+  // failing gracefully, which would otherwise crash every route.
+  if (isDemoSession) {
+    return { user: null, isDemoSession: true };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return { user, isDemoSession };
+  return { user, isDemoSession: false };
 }
