@@ -22,6 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
+import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import {
   CATALOG_MATERIALS,
   calculateValue,
@@ -29,27 +30,27 @@ import {
 import { formatCurrency, formatWeight } from '@/lib/utils';
 import { createScrap } from '@/lib/scraps/service';
 
-const CATEGORY_NAMES = {
-  metal: 'Metales & Cables',
-  wood: 'Madera & Tableros',
-  plastic: 'Plásticos',
-  construction: 'Residuos de Obra',
-};
-
 const CATEGORY_BADGES = {
-  metal: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  wood: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-  plastic: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-  construction: 'bg-stone-500/15 text-stone-300 border-stone-500/30',
+  metal: 'bg-accent/15 text-accent border-accent/30',
+  wood: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30',
+  plastic: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
+  construction: 'bg-stone-500/15 text-stone-700 dark:text-stone-300 border-stone-500/30',
 };
 
 export default function ManualEntryPage() {
   const router = useRouter();
+  const { t } = useLanguage();
+  const CATEGORY_NAMES = {
+    metal: t('manualEntry.categoryMetal'),
+    wood: t('manualEntry.categoryWood'),
+    plastic: t('manualEntry.categoryPlastic'),
+    construction: t('manualEntry.categoryConstruction'),
+  };
 
   // Categories & Materials
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedMaterialName, setSelectedMaterialName] = useState(CATALOG_MATERIALS[0].name);
-  
+
   // Custom material modal state
   const [isCustomMaterial, setIsCustomMaterial] = useState(false);
   const [customName, setCustomName] = useState('');
@@ -82,7 +83,7 @@ export default function ManualEntryPage() {
         price: customPrice || 1.0,
         unit: unit,
         subtype: 'personalizado',
-        description: 'Material añadido manualmente',
+        description: t('manualEntry.customMaterialHint'),
       };
     }
     const found = CATALOG_MATERIALS.find((m) => m.name === selectedMaterialName);
@@ -95,7 +96,7 @@ export default function ManualEntryPage() {
         subtype: 'otros',
       }
     );
-  }, [isCustomMaterial, customName, customCategory, customPrice, selectedMaterialName, unit]);
+  }, [isCustomMaterial, customName, customCategory, customPrice, selectedMaterialName, unit, t]);
 
   // Active price: either customized rate or official catalog price
   const activePrice = useMemo(() => {
@@ -130,8 +131,8 @@ export default function ManualEntryPage() {
   const handleSave = async (addAnother = false) => {
     if (numQuantity <= 0) {
       toast({
-        title: 'Cantidad requerida',
-        description: 'Introduce un peso o número de unidades válido mayor a 0.',
+        title: t('manualEntry.quantityRequiredTitle'),
+        description: t('manualEntry.quantityRequiredDesc'),
         variant: 'destructive',
       });
       return;
@@ -139,8 +140,8 @@ export default function ManualEntryPage() {
 
     if (isCustomMaterial && !customName.trim()) {
       toast({
-        title: 'Nombre requerido',
-        description: 'Escribe el nombre del material personalizado.',
+        title: t('manualEntry.nameRequiredTitle'),
+        description: t('manualEntry.nameRequiredDesc'),
         variant: 'destructive',
       });
       return;
@@ -169,8 +170,8 @@ export default function ManualEntryPage() {
       setLastSavedScrap(savedScrap);
 
       toast({
-        title: '¡Material guardado!',
-        description: `${savedScrap.material_name} (${numQuantity} ${unit}) añadido al inventario.`,
+        title: t('manualEntry.savedToastTitle'),
+        description: t('manualEntry.savedToastDesc', { name: savedScrap.material_name, qty: numQuantity, unit }),
       });
 
       if (addAnother) {
@@ -186,8 +187,8 @@ export default function ManualEntryPage() {
     } catch (err) {
       console.error('Error saving scrap:', err);
       toast({
-        title: 'Error al guardar',
-        description: 'No se pudo guardar el material. Inténtalo de nuevo.',
+        title: t('manualEntry.saveErrorTitle'),
+        description: t('manualEntry.saveErrorDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -201,20 +202,18 @@ export default function ManualEntryPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <PenSquare className="w-5 h-5" />
+            <span className="p-2 rounded-xl bg-accent/10 text-accent border border-accent/20">
+              <PenSquare className="w-5 h-5" aria-hidden="true" />
             </span>
-            <h1 className="text-2xl font-bold text-slate-100">Entrar a mano</h1>
+            <h1 className="text-2xl font-bold text-ink">{t('manualEntry.title')}</h1>
           </div>
-          <p className="text-sm text-slate-400">
-            Añade materiales y pesadas directamente con precios oficiales de mercado actualizados.
-          </p>
+          <p className="text-sm text-ink-muted">{t('manualEntry.subtitle')}</p>
         </div>
 
         <Link href="/scanner">
-          <Button variant="outline" size="sm" className="gap-2 self-start sm:self-auto text-slate-300 hover:text-amber-400">
-            <Camera className="w-4 h-4 text-amber-400" />
-            Escanear con cámara
+          <Button variant="outline" size="sm" className="gap-2 self-start sm:self-auto text-ink-muted hover:text-accent">
+            <Camera className="w-4 h-4 text-accent" aria-hidden="true" />
+            {t('manualEntry.scanWithCamera')}
           </Button>
         </Link>
       </div>
@@ -223,12 +222,12 @@ export default function ManualEntryPage() {
         {/* Main Form (Left 2 cols) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Card 1: Selección de Material */}
-          <Card className="border-slate-800 bg-slate-900/90 shadow-lg">
+          <Card>
             <CardContent className="p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-amber-400" />
-                  1. Selecciona el material
+                <Label htmlFor="material-select" className="text-sm font-semibold text-ink flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-accent" aria-hidden="true" />
+                  {t('manualEntry.step1')}
                 </Label>
                 <Badge className={CATEGORY_BADGES[currentMaterial.category]}>
                   {CATEGORY_NAMES[currentMaterial.category]}
@@ -236,27 +235,29 @@ export default function ManualEntryPage() {
               </div>
 
               {/* Category Filter Chips */}
-              <div className="flex gap-1.5 overflow-x-auto pb-1 text-xs">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 text-xs" role="group" aria-label={t('manualEntry.categoryLabel')}>
                 <button
                   type="button"
                   onClick={() => setSelectedCategory('all')}
+                  aria-pressed={selectedCategory === 'all'}
                   className={`px-3 py-1.5 rounded-lg border whitespace-nowrap transition-all cursor-pointer ${
                     selectedCategory === 'all'
-                      ? 'bg-amber-500 text-slate-950 font-semibold border-amber-500'
-                      : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+                      ? 'bg-accent text-accent-ink font-semibold border-accent-strong'
+                      : 'bg-surface-2 text-ink-muted border-edge hover:bg-edge'
                   }`}
                 >
-                  Todos ({CATALOG_MATERIALS.length})
+                  {t('common.all')} ({CATALOG_MATERIALS.length})
                 </button>
                 {['metal', 'wood', 'plastic', 'construction'].map((cat) => (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => setSelectedCategory(cat)}
+                    aria-pressed={selectedCategory === cat}
                     className={`px-3 py-1.5 rounded-lg border whitespace-nowrap transition-all cursor-pointer ${
                       selectedCategory === cat
-                        ? 'bg-amber-500 text-slate-950 font-semibold border-amber-500'
-                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+                        ? 'bg-accent text-accent-ink font-semibold border-accent-strong'
+                        : 'bg-surface-2 text-ink-muted border-edge hover:bg-edge'
                     }`}
                   >
                     {CATEGORY_NAMES[cat]}
@@ -268,42 +269,44 @@ export default function ManualEntryPage() {
               {!isCustomMaterial ? (
                 <div>
                   <select
+                    id="material-select"
                     value={selectedMaterialName}
                     onChange={(e) => handleSelectMaterial(e.target.value)}
-                    className="w-full h-11 px-3.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full h-11 px-3.5 rounded-xl bg-surface-2 border border-edge-strong text-ink text-sm focus:outline-none focus:ring-2 focus:ring-focus"
                   >
                     {filteredMaterials.map((mat) => (
                       <option key={mat.name} value={mat.name}>
                         {mat.name} — {mat.price.toFixed(2)} €/{mat.unit} ({CATEGORY_NAMES[mat.category]})
                       </option>
                     ))}
-                    <option value="__custom__">➕ + Añadir otro material personalizado...</option>
+                    <option value="__custom__">➕ {t('manualEntry.addCustom')}</option>
                   </select>
 
                   {currentMaterial.description && (
-                    <p className="text-xs text-slate-400 mt-2 flex items-center gap-1.5">
-                      <span className="text-amber-400">ℹ️</span> {currentMaterial.description}
+                    <p className="text-xs text-ink-muted mt-2 flex items-center gap-1.5">
+                      <span className="text-accent" aria-hidden="true">ℹ️</span> {currentMaterial.description}
                     </p>
                   )}
                 </div>
               ) : (
                 /* Custom Material Sub-Form */
-                <div className="p-4 rounded-xl bg-slate-950 border border-amber-500/30 space-y-3">
+                <div className="p-4 rounded-xl bg-surface-2 border border-accent/30 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-amber-400">Nuevo material personalizado</span>
+                    <span className="text-xs font-semibold text-accent">{t('manualEntry.newCustomMaterial')}</span>
                     <button
                       type="button"
                       onClick={() => setIsCustomMaterial(false)}
-                      className="text-xs text-slate-400 hover:text-slate-200 underline cursor-pointer"
+                      className="text-xs text-ink-muted hover:text-ink underline cursor-pointer"
                     >
-                      Volver a catálogo
+                      {t('manualEntry.backToCatalog')}
                     </button>
                   </div>
 
                   <div>
-                    <Label className="text-xs text-slate-400">Nombre del material</Label>
+                    <Label htmlFor="custom-material-name" className="text-xs text-ink-muted">{t('manualEntry.customNameLabel')}</Label>
                     <Input
-                      placeholder="Ej. Tubería multicapa, Baterías plomo..."
+                      id="custom-material-name"
+                      placeholder={t('manualEntry.customNamePlaceholder')}
                       value={customName}
                       onChange={(e) => setCustomName(e.target.value)}
                       className="mt-1"
@@ -312,22 +315,26 @@ export default function ManualEntryPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs text-slate-400">Categoría</Label>
+                      <Label htmlFor="custom-material-category" className="text-xs text-ink-muted">{t('manualEntry.categoryLabel')}</Label>
                       <select
+                        id="custom-material-category"
                         value={customCategory}
                         onChange={(e) => setCustomCategory(e.target.value)}
-                        className="w-full h-10 mt-1 px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className="w-full h-10 mt-1 px-3 rounded-lg bg-surface border border-edge-strong text-ink text-xs focus:outline-none focus:ring-2 focus:ring-focus"
                       >
-                        <option value="metal">Metal / Cable</option>
-                        <option value="wood">Madera</option>
-                        <option value="plastic">Plástico</option>
-                        <option value="construction">Obra</option>
+                        <option value="metal">{CATEGORY_NAMES.metal}</option>
+                        <option value="wood">{CATEGORY_NAMES.wood}</option>
+                        <option value="plastic">{CATEGORY_NAMES.plastic}</option>
+                        <option value="construction">{CATEGORY_NAMES.construction}</option>
                       </select>
                     </div>
 
                     <div>
-                      <Label className="text-xs text-slate-400">Precio base (€/{unit})</Label>
+                      <Label htmlFor="custom-material-price" className="text-xs text-ink-muted">
+                        {t('manualEntry.basePriceLabel', { unit })}
+                      </Label>
                       <Input
+                        id="custom-material-price"
                         type="number"
                         step="0.01"
                         min="0"
@@ -343,29 +350,30 @@ export default function ManualEntryPage() {
           </Card>
 
           {/* Card 2: Cantidad y Unidad */}
-          <Card className="border-slate-800 bg-slate-900/90 shadow-lg">
+          <Card>
             <CardContent className="p-5 space-y-4">
-              <Label className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-                <Scale className="w-4 h-4 text-amber-400" />
-                2. Cantidad y tipo de medida
+              <Label className="text-sm font-semibold text-ink flex items-center gap-2">
+                <Scale className="w-4 h-4 text-accent" aria-hidden="true" />
+                {t('manualEntry.step2')}
               </Label>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                 <div className="sm:col-span-2">
-                  <Label className="text-xs text-slate-400 mb-1 block">
-                    Cantidad ({unit === 'kg' ? 'Pesada en Kilogramos' : 'Número de unidades'})
+                  <Label htmlFor="quantity-input" className="text-xs text-ink-muted mb-1 block">
+                    {unit === 'kg' ? t('manualEntry.quantityWeightLabel') : t('manualEntry.quantityUnitsLabel')}
                   </Label>
                   <div className="relative">
                     <Input
+                      id="quantity-input"
                       type="number"
                       step="any"
                       min="0.1"
                       placeholder="0.00"
                       value={quantity}
                       onChange={(e) => setQuantity(e.target.value)}
-                      className="text-lg font-bold pl-4 pr-12 text-slate-100"
+                      className="text-lg font-bold pl-4 pr-12 text-ink"
                     />
-                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-ink-muted">
                       {unit}
                     </span>
                   </div>
@@ -373,29 +381,31 @@ export default function ManualEntryPage() {
 
                 {/* Unit Switcher */}
                 <div>
-                  <Label className="text-xs text-slate-400 mb-1 block">Unidad de medida</Label>
-                  <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-950 border border-slate-800">
+                  <span className="text-xs text-ink-muted mb-1 block">{t('manualEntry.unitMeasure')}</span>
+                  <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-surface-2 border border-edge" role="group" aria-label={t('manualEntry.unitMeasure')}>
                     <button
                       type="button"
                       onClick={() => setUnit('kg')}
+                      aria-pressed={unit === 'kg'}
                       className={`py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                         unit === 'kg'
-                          ? 'bg-amber-500 text-slate-950 shadow'
-                          : 'text-slate-400 hover:text-slate-200'
+                          ? 'bg-accent text-accent-ink shadow'
+                          : 'text-ink-muted hover:text-ink'
                       }`}
                     >
-                      Kg
+                      {t('manualEntry.unitKg')}
                     </button>
                     <button
                       type="button"
                       onClick={() => setUnit('ud')}
+                      aria-pressed={unit === 'ud'}
                       className={`py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                         unit === 'ud'
-                          ? 'bg-amber-500 text-slate-950 shadow'
-                          : 'text-slate-400 hover:text-slate-200'
+                          ? 'bg-accent text-accent-ink shadow'
+                          : 'text-ink-muted hover:text-ink'
                       }`}
                     >
-                      Unidades
+                      {t('manualEntry.unitUd')}
                     </button>
                   </div>
                 </div>
@@ -403,14 +413,14 @@ export default function ManualEntryPage() {
 
               {/* Quick Add Buttons */}
               <div>
-                <span className="text-[11px] text-slate-500 block mb-1.5">Suma rápida:</span>
+                <span className="text-[11px] text-ink-faint block mb-1.5">{t('manualEntry.quickAdd')}</span>
                 <div className="flex flex-wrap gap-1.5">
                   {[1, 5, 10, 25, 50, 100, 250, 500].map((val) => (
                     <button
                       key={val}
                       type="button"
                       onClick={() => handleQuickAddQty(val)}
-                      className="px-2.5 py-1 text-xs rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-amber-400 transition-colors cursor-pointer"
+                      className="px-2.5 py-1 text-xs rounded-lg bg-surface-2 border border-edge text-ink-muted hover:bg-edge hover:text-accent transition-colors cursor-pointer"
                     >
                       +{val} {unit}
                     </button>
@@ -418,9 +428,9 @@ export default function ManualEntryPage() {
                   <button
                     type="button"
                     onClick={() => setQuantity('0')}
-                    className="px-2.5 py-1 text-xs rounded-lg bg-slate-950 border border-slate-800 text-slate-500 hover:text-red-400 transition-colors cursor-pointer"
+                    className="px-2.5 py-1 text-xs rounded-lg bg-surface border border-edge text-ink-faint hover:text-danger transition-colors cursor-pointer"
                   >
-                    Borrar
+                    {t('manualEntry.clearAmount')}
                   </button>
                 </div>
               </div>
@@ -428,49 +438,52 @@ export default function ManualEntryPage() {
           </Card>
 
           {/* Card 3: Detalles y Tarifa (Opcional) */}
-          <Card className="border-slate-800 bg-slate-900/90 shadow-lg">
+          <Card>
             <CardContent className="p-5 space-y-4">
-              <Label className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-                <Hash className="w-4 h-4 text-amber-400" />
-                3. Tarifa y notas (Opcional)
+              <Label className="text-sm font-semibold text-ink flex items-center gap-2">
+                <Hash className="w-4 h-4 text-accent" aria-hidden="true" />
+                {t('manualEntry.step3')}
               </Label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-xs text-slate-400 mb-1 block">
-                    Precio aplicado (€/{unit})
+                  <Label htmlFor="price-applied-input" className="text-xs text-ink-muted mb-1 block">
+                    {t('manualEntry.priceAppliedLabel', { unit })}
                   </Label>
                   <Input
+                    id="price-applied-input"
                     type="number"
                     step="0.01"
-                    placeholder={`Oficial: ${currentMaterial.price.toFixed(2)}`}
+                    placeholder={currentMaterial.price.toFixed(2)}
                     value={customRate}
                     onChange={(e) => setCustomRate(e.target.value)}
                     className="text-sm"
                   />
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    Por defecto aplica tarifa oficial de mercado ({currentMaterial.price.toFixed(2)} €/{unit}).
+                  <p className="text-[11px] text-ink-faint mt-1">
+                    {t('manualEntry.officialDefault', { price: currentMaterial.price.toFixed(2), unit })}
                   </p>
                 </div>
 
                 <div>
-                  <Label className="text-xs text-slate-400 mb-1 block">Estado del material</Label>
+                  <Label htmlFor="material-status-select" className="text-xs text-ink-muted mb-1 block">{t('manualEntry.materialStatus')}</Label>
                   <select
+                    id="material-status-select"
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full h-10 px-3 rounded-xl bg-surface-2 border border-edge-strong text-ink text-sm focus:outline-none focus:ring-2 focus:ring-focus"
                   >
-                    <option value="available">Disponible en almacén</option>
-                    <option value="in_lot">Asignado a lote</option>
-                    <option value="sold">Vendido</option>
+                    <option value="available">{t('manualEntry.statusAvailableWarehouse')}</option>
+                    <option value="in_lot">{t('manualEntry.statusAssignedLot')}</option>
+                    <option value="sold">{t('manualEntry.statusSold')}</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <Label className="text-xs text-slate-400 mb-1 block">Notas de procedencia o condición</Label>
+                <Label htmlFor="condition-notes" className="text-xs text-ink-muted mb-1 block">{t('manualEntry.notesLabel')}</Label>
                 <Textarea
-                  placeholder="Ej: Procedente de desmonte nave 3, limpio, listo para recogida..."
+                  id="condition-notes"
+                  placeholder={t('manualEntry.notesPlaceholder')}
                   value={conditionNotes}
                   onChange={(e) => setConditionNotes(e.target.value)}
                   rows={2}
@@ -483,80 +496,80 @@ export default function ManualEntryPage() {
 
         {/* Live Calculation Summary Sidebar (Right 1 col) */}
         <div className="space-y-4">
-          <Card className="border-amber-500/30 bg-gradient-to-b from-slate-900 to-slate-950 shadow-xl sticky top-6">
+          <Card className="border-accent/30 sticky top-6">
             <CardContent className="p-5 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <span className="text-xs uppercase tracking-wider font-semibold text-slate-400">
-                  Cálculo Automático
+              <div className="flex items-center justify-between pb-3 border-b border-edge">
+                <span className="text-xs uppercase tracking-wider font-semibold text-ink-muted">
+                  {t('manualEntry.calcHeader')}
                 </span>
-                <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  Tarifa oficial
+                <span className="flex items-center gap-1 text-xs text-positive font-medium">
+                  <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />
+                  {t('manualEntry.officialRate')}
                 </span>
               </div>
 
               {/* Material selected */}
               <div>
-                <p className="text-xs text-slate-500 mb-0.5">Material</p>
-                <p className="text-base font-bold text-slate-100 truncate">{currentMaterial.name}</p>
-                <span className="text-xs text-slate-400">{CATEGORY_NAMES[currentMaterial.category]}</span>
+                <p className="text-xs text-ink-faint mb-0.5">{t('inventory.material')}</p>
+                <p className="text-base font-bold text-ink truncate">{currentMaterial.name}</p>
+                <span className="text-xs text-ink-muted">{CATEGORY_NAMES[currentMaterial.category]}</span>
               </div>
 
               {/* Metrics breakdown */}
-              <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-surface-2 border border-edge">
                 <div>
-                  <p className="text-[11px] text-slate-500">Cantidad</p>
-                  <p className="text-sm font-semibold text-slate-200">
+                  <p className="text-[11px] text-ink-faint">{t('manualEntry.quantity')}</p>
+                  <p className="text-sm font-semibold text-ink">
                     {numQuantity > 0 ? (unit === 'kg' ? formatWeight(numQuantity) : `${numQuantity} ud`) : '0'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-slate-500">Precio unitario</p>
-                  <p className="text-sm font-semibold text-amber-400">
+                  <p className="text-[11px] text-ink-faint">{t('manualEntry.unitPrice')}</p>
+                  <p className="text-sm font-semibold text-accent">
                     {activePrice.toFixed(2)} €/{unit}
                   </p>
                 </div>
               </div>
 
               {/* Big Total Card */}
-              <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/40 to-slate-950 border border-emerald-500/30 text-center">
-                <p className="text-xs text-emerald-400 font-medium mb-1">VALOR TOTAL ESTIMADO</p>
-                <p className="text-3xl font-extrabold text-emerald-400">
+              <div className="p-4 rounded-xl bg-positive/10 border border-positive/30 text-center">
+                <p className="text-xs text-positive font-medium mb-1 uppercase tracking-wide">{t('manualEntry.totalEstimated')}</p>
+                <p className="text-3xl font-extrabold text-positive">
                   {formatCurrency(totalValue)}
                 </p>
-                <p className="text-[11px] text-slate-500 mt-1">Calculado en tiempo real</p>
+                <p className="text-[11px] text-ink-faint mt-1">{t('manualEntry.realtimeCalc')}</p>
               </div>
 
               {/* Action Buttons */}
               <div className="space-y-2 pt-2">
                 <Button
                   variant="amber"
-                  className="w-full h-11 text-base font-semibold shadow-lg shadow-amber-500/20"
+                  className="w-full h-11 text-base font-semibold"
                   onClick={() => handleSave(false)}
                   disabled={isSaving || numQuantity <= 0}
                 >
-                  <Save className="w-4 h-4 mr-2" />
-                  {isSaving ? 'Guardando...' : 'Guardar en inventario'}
+                  <Save className="w-4 h-4 mr-2" aria-hidden="true" />
+                  {isSaving ? t('common.saving') : t('manualEntry.saveToInventory')}
                 </Button>
 
                 <Button
                   variant="outline"
-                  className="w-full text-slate-300 hover:text-slate-100 hover:bg-slate-800"
+                  className="w-full text-ink-muted hover:text-ink hover:bg-surface-2"
                   onClick={() => handleSave(true)}
                   disabled={isSaving || numQuantity <= 0}
                 >
-                  <PlusCircle className="w-4 h-4 mr-2 text-amber-400" />
-                  Guardar y añadir otro
+                  <PlusCircle className="w-4 h-4 mr-2 text-accent" aria-hidden="true" />
+                  {t('manualEntry.saveAndAddAnother')}
                 </Button>
               </div>
             </CardContent>
           </Card>
 
           {/* Quick Tip */}
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start gap-3">
-            <span className="text-lg">💡</span>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              <strong>Entrada rápida:</strong> Si tienes varios sacos o lotes, pulsa <em>&quot;Guardar y añadir otro&quot;</em> para registrar pesadas seguidas sin salir de esta pantalla.
+          <div className="p-4 rounded-xl bg-surface border border-edge flex items-start gap-3">
+            <span className="text-lg" aria-hidden="true">💡</span>
+            <p className="text-xs text-ink-muted leading-relaxed">
+              <strong>{t('manualEntry.quickTipTitle')}</strong> {t('manualEntry.quickTipBody')}
             </p>
           </div>
         </div>
@@ -564,33 +577,38 @@ export default function ManualEntryPage() {
 
       {/* Success Modal */}
       {showSuccessModal && lastSavedScrap && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm fade-in">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-6 h-6" />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="manual-entry-success-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm fade-in"
+        >
+          <div className="w-full max-w-md bg-surface border border-edge rounded-2xl p-6 shadow-2xl text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-positive/15 text-positive border border-positive/30 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-6 h-6" aria-hidden="true" />
             </div>
 
             <div>
-              <h2 className="text-xl font-bold text-slate-100">¡Material registrado con éxito!</h2>
-              <p className="text-sm text-slate-400 mt-1">
-                Se ha añadido <strong className="text-slate-200">{lastSavedScrap.material_name}</strong> a tu inventario.
+              <h2 id="manual-entry-success-title" className="text-xl font-bold text-ink">{t('manualEntry.successTitle')}</h2>
+              <p className="text-sm text-ink-muted mt-1">
+                {t('manualEntry.successDesc', { name: lastSavedScrap.material_name })}
               </p>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-left space-y-1 text-xs">
+            <div className="p-3 rounded-xl bg-surface-2 border border-edge text-left space-y-1 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-500">Cantidad:</span>
-                <span className="font-semibold text-slate-300">
+                <span className="text-ink-faint">{t('manualEntry.successQuantity')}</span>
+                <span className="font-semibold text-ink-muted">
                   {unit === 'kg' ? formatWeight(lastSavedScrap.weight_kg || 0) : `${lastSavedScrap.weight_kg} unidades`}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Precio aplicado:</span>
-                <span className="font-semibold text-slate-300">{lastSavedScrap.price_per_kg?.toFixed(2)} €/{unit}</span>
+                <span className="text-ink-faint">{t('manualEntry.successPrice')}</span>
+                <span className="font-semibold text-ink-muted">{lastSavedScrap.price_per_kg?.toFixed(2)} €/{unit}</span>
               </div>
-              <div className="flex justify-between pt-1 border-t border-slate-800 text-sm">
-                <span className="text-slate-400">Total recuperado:</span>
-                <span className="font-bold text-emerald-400">{formatCurrency(lastSavedScrap.total_value || 0)}</span>
+              <div className="flex justify-between pt-1 border-t border-edge text-sm">
+                <span className="text-ink-muted">{t('manualEntry.successTotal')}</span>
+                <span className="font-bold text-positive">{formatCurrency(lastSavedScrap.total_value || 0)}</span>
               </div>
             </div>
 
@@ -604,14 +622,14 @@ export default function ManualEntryPage() {
                   setConditionNotes('');
                 }}
               >
-                Añadir otro
+                {t('manualEntry.addAnother')}
               </Button>
               <Button
                 variant="amber"
                 onClick={() => router.push('/inventory')}
               >
-                Ver inventario
-                <ArrowRight className="w-4 h-4 ml-1.5" />
+                {t('manualEntry.viewInventory')}
+                <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden="true" />
               </Button>
             </div>
           </div>

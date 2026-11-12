@@ -1,6 +1,9 @@
 import { Inter } from 'next/font/google';
+import { cookies } from 'next/headers';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
+import { Providers } from '@/components/shared/Providers';
+import { THEME_BLOCKING_SCRIPT } from '@/lib/theme/ThemeProvider';
+import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from '@/lib/i18n/dictionaries';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -33,22 +36,41 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: '#0f172a',
+  themeColor: '#08090b',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // No maximumScale / userScalable: false here — locking pinch-zoom blocks
+  // low-vision users from resizing content (WCAG 1.4.4) and is exactly the
+  // kind of accessibility regression this app must not ship with.
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const cookieStore = await cookies();
+  const langCookie = cookieStore.get('scraplens_lang')?.value;
+  const themeCookie = cookieStore.get('scraplens_theme')?.value;
+  const initialLang = SUPPORTED_LANGUAGES.includes(langCookie) ? langCookie : DEFAULT_LANGUAGE;
+  const initialTheme = themeCookie === 'light' ? 'light' : 'dark';
+
   return (
-    <html lang="es" className={inter.variable}>
+    <html
+      lang={initialLang}
+      data-theme={initialTheme}
+      className={inter.variable}
+      // The render-blocking script below can flip data-theme (and the
+      // language toggle can flip lang) on the client before hydration,
+      // purely to avoid a flash of the wrong theme — React must not warn
+      // about (or try to "fix") that expected, intentional mismatch.
+      suppressHydrationWarning
+    >
       <head>
         <link rel="icon" href="/icons/icon-192.png" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        {/* Render-blocking: applies the stored/system theme before paint so
+            toggling never causes a flash of the wrong theme. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BLOCKING_SCRIPT }} />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -61,9 +83,13 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body className="bg-slate-950 text-slate-50 antialiased font-sans">
-        {children}
-        <Toaster />
+      <body className="bg-canvas text-ink antialiased font-sans">
+        <a href="#main-content" className="skip-link">
+          Saltar al contenido principal / Skip to main content
+        </a>
+        <Providers initialLang={initialLang} initialTheme={initialTheme}>
+          {children}
+        </Providers>
       </body>
     </html>
   );

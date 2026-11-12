@@ -8,5 +8,5 @@ export default async function AuthLayout({ children }) {
     redirect('/dashboard');
   }
 
-  return children;
+  return <div className="bg-canvas">{children}</div>;
 }

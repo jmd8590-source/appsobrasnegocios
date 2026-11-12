@@ -1,17 +1,83 @@
 @import "tailwindcss";
 
 /* =====================================================
-   ScrapLens — Global Styles
-   Design system: slate/neutral base + amber/emerald accents
+   ScrapLens — Design System
+   "Minimal / alto contraste": big confident type, generous
+   whitespace, hairline borders, color used only to carry
+   meaning (value = emerald, action = amber, risk = red).
+   Every color is a semantic token so light/dark is a single
+   attribute flip ([data-theme]) instead of two parallel UIs.
    ===================================================== */
 
 @theme {
   --font-sans: var(--font-inter), system-ui, sans-serif;
 
-  /* Brand colors */
+  /* Semantic tokens — values are assigned below per [data-theme].
+     Keeping them inside @theme makes Tailwind emit the matching
+     utilities (bg-canvas, text-ink, border-edge, etc.). */
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-edge: var(--edge);
+  --color-edge-strong: var(--edge-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-ink: var(--accent-ink);
+  --color-positive: var(--positive);
+  --color-positive-ink: var(--positive-ink);
+  --color-danger: var(--danger);
+  --color-danger-ink: var(--danger-ink);
+  --color-focus: var(--focus);
+
+  /* Legacy brand tokens kept for any lingering reference */
   --color-brand-amber: #f59e0b;
   --color-brand-emerald: #10b981;
-  --color-brand-slate: #1e293b;
+}
+
+/* ---------- Dark (default) ---------- */
+:root,
+:root[data-theme='dark'] {
+  --canvas: #08090b;
+  --surface: #121316;
+  --surface-2: #1b1d22;
+  --edge: #26282e;
+  --edge-strong: #383b42;
+  --ink: #f7f7f8;
+  --ink-muted: #b4b7c0;
+  --ink-faint: #797d87;
+  --accent: #f59e0b;
+  --accent-strong: #fbbf24;
+  --accent-ink: #1a1203;
+  --positive: #22c55e;
+  --positive-ink: #04140a;
+  --danger: #f87171;
+  --danger-ink: #1a0404;
+  --focus: #fbbf24;
+  color-scheme: dark;
+}
+
+/* ---------- Light ---------- */
+:root[data-theme='light'] {
+  --canvas: #fcfcfb;
+  --surface: #ffffff;
+  --surface-2: #f3f3f1;
+  --edge: #e3e3e0;
+  --edge-strong: #c8c8c4;
+  --ink: #101113;
+  --ink-muted: #51525b;
+  --ink-faint: #797d87;
+  --accent: #b45309;
+  --accent-strong: #92400e;
+  --accent-ink: #fffaf0;
+  --positive: #0f7a3d;
+  --positive-ink: #ecfdf3;
+  --danger: #b91c1c;
+  --danger-ink: #fef2f2;
+  --focus: #b45309;
+  color-scheme: light;
 }
 
 /* Base styles */
@@ -23,12 +89,43 @@ html {
   scroll-behavior: smooth;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 body {
-  background-color: #0f172a; /* slate-950 */
-  color: #f1f5f9; /* slate-100 */
+  background-color: var(--canvas);
+  color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Visible, high-contrast skip link for keyboard users */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  border-radius: 0 0 0.5rem 0;
+}
+
+.skip-link:focus {
+  left: 0;
 }
 
 /* Scrollbar styling */
@@ -38,35 +135,35 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: var(--surface-2);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--edge-strong);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--ink-faint);
 }
 
 /* Selection */
 ::selection {
-  background-color: #f59e0b33;
-  color: #f59e0b;
+  background-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--ink);
 }
 
-/* Focus ring */
+/* Focus ring — always visible, meets WCAG 2.4.7 */
 :focus-visible {
-  outline: 2px solid #f59e0b;
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
 /* Glass card effect */
 .glass-card {
-  background: rgba(30, 41, 59, 0.6);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(71, 85, 105, 0.4);
+  border: 1px solid var(--edge);
 }
 
 /* Shimmer animation */
@@ -76,12 +173,7 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    #1e293b 25%,
-    #334155 50%,
-    #1e293b 75%
-  );
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -107,21 +199,21 @@ body {
   position: absolute;
   inset: -4px;
   border-radius: inherit;
-  border: 2px solid #f59e0b;
+  border: 2px solid var(--accent);
   animation: pulseRing 1.5s ease-out infinite;
 }
 
-/* Category badge colors */
-.badge-metal { @apply bg-amber-500/20 text-amber-400 border border-amber-500/30; }
-.badge-wood { @apply bg-orange-500/20 text-orange-400 border border-orange-500/30; }
-.badge-plastic { @apply bg-blue-500/20 text-blue-400 border border-blue-500/30; }
-.badge-construction { @apply bg-slate-500/20 text-slate-400 border border-slate-500/30; }
+/* Category badge colors (semantic, theme-aware) */
+.badge-metal { @apply bg-accent/15 text-accent border border-accent/30; }
+.badge-wood { @apply bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/30; }
+.badge-plastic { @apply bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30; }
+.badge-construction { @apply bg-ink-faint/15 text-ink-muted border border-ink-faint/30; }
 
 /* Status badge colors */
-.badge-available { @apply bg-emerald-500/20 text-emerald-400 border border-emerald-500/30; }
-.badge-in_lot { @apply bg-amber-500/20 text-amber-400 border border-amber-500/30; }
-.badge-sold { @apply bg-blue-500/20 text-blue-400 border border-blue-500/30; }
-.badge-discarded { @apply bg-red-500/20 text-red-400 border border-red-500/30; }
+.badge-available { @apply bg-positive/15 text-positive border border-positive/30; }
+.badge-in_lot { @apply bg-accent/15 text-accent border border-accent/30; }
+.badge-sold { @apply bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30; }
+.badge-discarded { @apply bg-danger/15 text-danger border border-danger/30; }
 
 /* Bottom nav safe area */
 .safe-bottom {
@@ -135,15 +227,15 @@ body {
 
 .card-hover:hover {
   transform: translateY(-1px);
-  border-color: rgba(71, 85, 105, 0.8);
+  border-color: var(--edge-strong);
 }
 
-/* Input autofill fix for dark mode */
+/* Input autofill fix */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #f1f5f9;
-  -webkit-box-shadow: 0 0 0px 1000px #1e293b inset;
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0px 1000px var(--surface-2) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
 
@@ -154,9 +246,9 @@ video.camera-feed {
 }
 
 /* Confidence bar colors */
-.confidence-high { background-color: #10b981; }
-.confidence-medium { background-color: #f59e0b; }
-.confidence-low { background-color: #ef4444; }
+.confidence-high { background-color: var(--positive); }
+.confidence-medium { background-color: var(--accent); }
+.confidence-low { background-color: var(--danger); }
 
 /* Hide Next.js development indicators / badge overlays */
 nextjs-portal,

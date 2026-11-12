@@ -1,8 +1,10 @@
 // Simple Service Worker for ScrapLens PWA
 const CACHE_NAME = 'scraplens-v1';
+// Only precache public, unauthenticated assets. "/dashboard" is a
+// session-guarded route — caching it here could serve a stale/incorrect
+// shell offline for a different session (or none at all).
 const STATIC_ASSETS = [
   '/',
-  '/dashboard',
   '/manifest.json',
 ];
 

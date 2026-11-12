@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from '@/hooks/use-toast';
+import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import { DEMO_SCRAPS, DEMO_LISTINGS } from '@/lib/demo/data';
 import { getScraps } from '@/lib/scraps/service';
+import { getListings, createListing } from '@/lib/listings/service';
 import {
   formatCurrency,
   formatWeight,
@@ -17,22 +19,33 @@ import {
   generateWhatsAppUrl,
 } from '@/lib/utils';
 
-const STATUS_COLORS = {
-  draft: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
-  active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  sold: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  archived: 'bg-slate-600/20 text-slate-500 border-slate-600/30',
+const STATUS_STYLES = {
+  draft: 'bg-surface-2 text-ink-muted border-edge-strong',
+  active: 'bg-positive/15 text-positive border-positive/30',
+  sold: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
+  archived: 'bg-ink-faint/15 text-ink-faint border-ink-faint/30',
 };
-const STATUS_LABELS = { draft: 'Borrador', active: 'Activo', sold: 'Vendido', archived: 'Archivado' };
 
 export default function LotsPage() {
+  const { t } = useLanguage();
   const [listings, setListings] = useState(DEMO_LISTINGS);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(null);
 
+  const STATUS_LABELS = {
+    draft: t('lots.statusDraft'),
+    active: t('lots.statusActive'),
+    sold: t('lots.statusSold'),
+    archived: t('lots.statusArchived'),
+  };
+
+  useEffect(() => {
+    getListings().then(setListings);
+  }, []);
+
   const handleCreated = (listing) => {
     setListings((prev) => [listing, ...prev]);
-    toast({ title: '✅ Lote creado', description: `"${listing.title}" listo para compartir` });
+    toast({ title: t('lots.createdToastTitle'), description: t('lots.createdToastDesc', { title: listing.title }) });
   };
 
   return (
@@ -40,12 +53,12 @@ export default function LotsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Lotes</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Agrupa sobrantes y genera fichas comerciales</p>
+          <h1 className="text-2xl font-bold text-ink">{t('lots.title')}</h1>
+          <p className="text-sm text-ink-muted mt-0.5">{t('lots.subtitle')}</p>
         </div>
         <Button variant="amber" size="sm" onClick={() => setShowCreateDialog(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nuevo lote
+          <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
+          {t('lots.newLot')}
         </Button>
       </div>
 
@@ -53,12 +66,12 @@ export default function LotsPage() {
       {listings.length === 0 && (
         <EmptyState
           icon={Layers}
-          title="Sin lotes"
-          description="Crea tu primer lote agrupando sobrantes del inventario"
+          title={t('lots.emptyTitle')}
+          description={t('lots.emptyDesc')}
           action={
             <Button variant="amber" size="sm" onClick={() => setShowCreateDialog(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Crear lote
+              <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
+              {t('lots.createLot')}
             </Button>
           }
         />
@@ -73,16 +86,16 @@ export default function LotsPage() {
                 <div className="flex-1 min-w-0">
                   <CardTitle className="text-base line-clamp-2 mb-2">{listing.title}</CardTitle>
                   <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[listing.status]}`}>
+                    <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[listing.status]}`}>
                       {STATUS_LABELS[listing.status]}
                     </span>
-                    <span className="text-xs text-slate-500">{formatRelativeTime(listing.created_at)}</span>
+                    <span className="text-xs text-ink-faint">{formatRelativeTime(listing.created_at)}</span>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-xs text-slate-500">Valor est.</p>
-                  <p className="text-xl font-bold text-emerald-400">{formatCurrency(listing.total_value)}</p>
-                  <p className="text-xs text-slate-500">{formatWeight(listing.total_weight_kg)}</p>
+                  <p className="text-xs text-ink-faint">{t('lots.valueEst')}</p>
+                  <p className="text-xl font-bold text-positive">{formatCurrency(listing.total_value)}</p>
+                  <p className="text-xs text-ink-faint">{formatWeight(listing.total_weight_kg)}</p>
                 </div>
               </div>
             </CardHeader>
@@ -91,10 +104,10 @@ export default function LotsPage() {
               {listing.scraps && listing.scraps.length > 0 && (
                 <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
                   {listing.scraps.map((scrap) => (
-                    <div key={scrap.id} className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700">
-                      <Package className="w-3 h-3 text-slate-500" />
-                      <span className="text-xs text-slate-300 whitespace-nowrap">{scrap.material_name}</span>
-                      <span className="text-xs text-amber-400">{formatCurrency(scrap.total_value)}</span>
+                    <div key={scrap.id} className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface-2 border border-edge">
+                      <Package className="w-3 h-3 text-ink-faint" aria-hidden="true" />
+                      <span className="text-xs text-ink-muted whitespace-nowrap">{scrap.material_name}</span>
+                      <span className="text-xs text-accent">{formatCurrency(scrap.total_value)}</span>
                     </div>
                   ))}
                 </div>
@@ -102,18 +115,18 @@ export default function LotsPage() {
 
               {/* Description preview */}
               {listing.description && (
-                <p className="text-xs text-slate-500 line-clamp-3 mb-4">{listing.description.replace(/\*\*/g, '').replace(/\n/g, ' ')}</p>
+                <p className="text-xs text-ink-faint line-clamp-3 mb-4">{listing.description.replace(/\*\*/g, '').replace(/\n/g, ' ')}</p>
               )}
 
               {/* Actions */}
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowShareDialog(listing)}>
-                  <Share2 className="w-3.5 h-3.5 mr-1.5" />
-                  Compartir
+                  <Share2 className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
+                  {t('lots.share')}
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1" onClick={() => handleExportPDF(listing)}>
-                  <Download className="w-3.5 h-3.5 mr-1.5" />
-                  PDF
+                <Button variant="outline" size="sm" className="flex-1" onClick={() => handleExportPDF(listing, t)}>
+                  <Download className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
+                  {t('lots.pdf')}
                 </Button>
               </div>
             </CardContent>
@@ -143,6 +156,7 @@ export default function LotsPage() {
 // Create Lot Dialog
 // -------------------------------------------------------
 function CreateLotDialog({ open, onClose, onCreated }) {
+  const { t } = useLanguage();
   const [allScraps, setAllScraps] = useState(DEMO_SCRAPS);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -164,7 +178,7 @@ function CreateLotDialog({ open, onClose, onCreated }) {
 
   const handleCreate = async () => {
     if (selectedIds.length === 0) {
-      toast({ title: 'Sin sobrantes', description: 'Selecciona al menos un sobrante', variant: 'destructive' });
+      toast({ title: t('lots.noScrapsSelectedTitle'), description: t('lots.noScrapsSelectedDesc'), variant: 'destructive' });
       return;
     }
     setIsGenerating(true);
@@ -180,28 +194,20 @@ function CreateLotDialog({ open, onClose, onCreated }) {
       });
       const data = await res.json();
 
-      const timestamp = new Date().toISOString();
-      const randomSuffix = Math.random().toString(36).substring(2, 9);
-      const newListing = {
-        id: `lot-${randomSuffix}`,
-        user_id: 'demo',
+      const newListing = await createListing({
         title: data.data?.title ?? 'Lote de materiales de recuperación',
         description: data.data?.description ?? '',
         total_value: totalValue,
         total_weight_kg: totalWeight,
         status: 'draft',
-        share_token: `share-${randomSuffix}`,
-        is_demo: true,
-        created_at: timestamp,
-        updated_at: timestamp,
         scraps: selectedScraps,
-      };
+      });
 
       onCreated(newListing);
       setSelectedIds([]);
       onClose();
     } catch {
-      toast({ title: 'Error al generar lote', variant: 'destructive' });
+      toast({ title: t('lots.createErrorTitle'), variant: 'destructive' });
     } finally {
       setIsGenerating(false);
     }
@@ -212,16 +218,16 @@ function CreateLotDialog({ open, onClose, onCreated }) {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-amber-400" />
-            Crear nuevo lote
+            <Layers className="w-5 h-5 text-accent" aria-hidden="true" />
+            {t('lots.createDialogTitle')}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <p className="text-sm text-slate-400">Selecciona los sobrantes disponibles para incluir en el lote:</p>
+          <p className="text-sm text-ink-muted">{t('lots.selectScrapsHint')}</p>
 
           {availableScraps.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-6">No hay sobrantes disponibles.</p>
+            <p className="text-sm text-ink-faint text-center py-6">{t('lots.noAvailable')}</p>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {availableScraps.map((scrap) => {
@@ -230,20 +236,21 @@ function CreateLotDialog({ open, onClose, onCreated }) {
                   <button
                     key={scrap.id}
                     onClick={() => toggleSelect(scrap.id)}
+                    aria-pressed={isSelected}
                     className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
-                      isSelected ? 'border-amber-500 bg-amber-500/10' : 'border-slate-700 bg-slate-800/40 hover:border-slate-600'
+                      isSelected ? 'border-accent bg-accent/10' : 'border-edge bg-surface-2 hover:border-edge-strong'
                     }`}
                   >
                     {isSelected ? (
-                      <CheckSquare className="w-4 h-4 text-amber-400 shrink-0" />
+                      <CheckSquare className="w-4 h-4 text-accent shrink-0" aria-hidden="true" />
                     ) : (
-                      <Square className="w-4 h-4 text-slate-500 shrink-0" />
+                      <Square className="w-4 h-4 text-ink-faint shrink-0" aria-hidden="true" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-200 truncate">{scrap.material_name}</p>
-                      <p className="text-xs text-slate-500">{formatWeight(scrap.weight_kg)}</p>
+                      <p className="text-sm font-medium text-ink truncate">{scrap.material_name}</p>
+                      <p className="text-xs text-ink-faint">{formatWeight(scrap.weight_kg)}</p>
                     </div>
-                    <span className="text-sm font-semibold text-emerald-400 shrink-0">{formatCurrency(scrap.total_value)}</span>
+                    <span className="text-sm font-semibold text-positive shrink-0">{formatCurrency(scrap.total_value)}</span>
                   </button>
                 );
               })}
@@ -251,25 +258,31 @@ function CreateLotDialog({ open, onClose, onCreated }) {
           )}
 
           {selectedIds.length > 0 && (
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-700">
-              <span className="text-sm text-slate-400">{selectedIds.length} sobrante{selectedIds.length > 1 ? 's' : ''} · {formatWeight(totalWeight)}</span>
-              <span className="text-base font-bold text-emerald-400">{formatCurrency(totalValue)}</span>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-surface border border-edge-strong">
+              <span className="text-sm text-ink-muted">
+                {t('lots.selectedSummary', {
+                  count: selectedIds.length,
+                  plural: selectedIds.length > 1 ? 's' : '',
+                  weight: formatWeight(totalWeight),
+                })}
+              </span>
+              <span className="text-base font-bold text-positive">{formatCurrency(totalValue)}</span>
             </div>
           )}
 
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
-            <Zap className="w-4 h-4 text-amber-400 shrink-0" />
-            <p className="text-xs text-slate-400">Se generará automáticamente un título y descripción comercial para el lote.</p>
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-accent/5 border border-accent/20">
+            <Zap className="w-4 h-4 text-accent shrink-0" aria-hidden="true" />
+            <p className="text-xs text-ink-muted">{t('lots.aiHint')}</p>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isGenerating}>Cancelar</Button>
+          <Button variant="outline" onClick={onClose} disabled={isGenerating}>{t('common.cancel')}</Button>
           <Button variant="amber" onClick={handleCreate} disabled={isGenerating || selectedIds.length === 0}>
             {isGenerating ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generando...</>
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />{t('lots.generating')}</>
             ) : (
-              <><Zap className="w-4 h-4 mr-2" />Crear lote</>
+              <><Zap className="w-4 h-4 mr-2" aria-hidden="true" />{t('lots.createLot')}</>
             )}
           </Button>
         </DialogFooter>
@@ -282,6 +295,7 @@ function CreateLotDialog({ open, onClose, onCreated }) {
 // Share Lot Dialog
 // -------------------------------------------------------
 function ShareLotDialog({ listing, onClose }) {
+  const { t } = useLanguage();
   const shareUrl = generateShareUrl(listing.share_token);
   const whatsappUrl = generateWhatsAppUrl(shareUrl, listing.title);
   const [copied, setCopied] = useState(false);
@@ -291,9 +305,9 @@ function ShareLotDialog({ listing, onClose }) {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast({ title: '¡Enlace copiado!', description: 'Pégalo donde quieras compartirlo' });
+      toast({ title: t('common.copied'), description: t('lots.shareNote') });
     } catch {
-      toast({ title: 'No se pudo copiar', variant: 'destructive' });
+      toast({ title: t('lots.copyErrorTitle'), variant: 'destructive' });
     }
   };
 
@@ -302,45 +316,44 @@ function ShareLotDialog({ listing, onClose }) {
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Share2 className="w-5 h-5 text-emerald-400" />
-            Compartir lote
+            <Share2 className="w-5 h-5 text-positive" aria-hidden="true" />
+            {t('lots.shareDialogTitle')}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <p className="text-sm text-slate-300 font-medium line-clamp-2">{listing.title}</p>
+          <p className="text-sm text-ink-muted font-medium line-clamp-2">{listing.title}</p>
 
-          <div className="p-3 rounded-xl bg-slate-800 border border-slate-700">
-            <p className="text-xs text-slate-500 mb-1">Enlace compartible</p>
-            <p className="text-xs text-slate-300 break-all font-mono">{shareUrl}</p>
+          <div className="p-3 rounded-xl bg-surface-2 border border-edge">
+            <p className="text-xs text-ink-faint mb-1">{t('lots.shareableLink')}</p>
+            <p className="text-xs text-ink-muted break-all font-mono">{shareUrl}</p>
           </div>
 
           <div className="flex flex-col gap-2">
             <Button variant="emerald" onClick={handleCopy} className="w-full">
-              {copied ? '✓ ¡Copiado!' : 'Copiar enlace'}
+              {copied ? `✓ ${t('common.copied')}` : t('lots.copyLink')}
             </Button>
             <Button
               variant="outline"
               className="w-full gap-2"
               onClick={() => window.open(whatsappUrl, '_blank')}
             >
-              <span className="text-lg">💬</span>
-              Compartir por WhatsApp
+              <span className="text-lg" aria-hidden="true">💬</span>
+              {t('lots.shareWhatsapp')}
             </Button>
           </div>
 
-          <p className="text-xs text-slate-500 text-center">
-            El enlace mostrará una ficha pública con los detalles del lote
-          </p>
+          <p className="text-xs text-ink-faint text-center">{t('lots.shareNote')}</p>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-// PDF export (simplified)
-function handleExportPDF(listing) {
-  toast({ title: 'PDF generado', description: `Ficha de "${listing.title}" descargada` });
-  const content = `SCRAPLENS — FICHA DE LOTE\n\n${listing.title}\n\nValor estimado: ${formatCurrency(listing.total_value)}\nPeso total: ${formatWeight(listing.total_weight_kg)}\n\n${listing.description ?? ''}\n\n⚠️ Los precios son orientativos y no constituyen oferta comercial vinculante.`;
+// PDF export (simplified) — receives `t` from the calling component since
+// this helper lives outside the component tree and has no hook access.
+function handleExportPDF(listing, t) {
+  toast({ title: t('lots.pdfGeneratedTitle'), description: t('lots.pdfGeneratedDesc', { title: listing.title }) });
+  const content = `SCRAPLENS\n\n${listing.title}\n\n${t('lots.valueEst')}: ${formatCurrency(listing.total_value)}\n${formatWeight(listing.total_weight_kg)}\n\n${listing.description ?? ''}\n\n⚠️ ${t('common.disclaimer')}`;
   const blob = new Blob([content], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

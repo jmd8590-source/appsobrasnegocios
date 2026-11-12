@@ -85,7 +85,7 @@ export async function POST(request) {
         ],
         config: {
           temperature: 0.2,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 1536,
         },
       });
 
@@ -135,6 +135,18 @@ export async function POST(request) {
     }
 
     const analysis = validationResult.data;
+
+    // Defense in depth: don't rely solely on the model obeying the prompt's
+    // confidence rule for intact equipment / uncertain objects. A pallet
+    // truck or a working appliance confidently priced as "15kg of scrap"
+    // is exactly the failure this guards against — clamp confidence so the
+    // UI always shows the "verify manually" warning for these cases.
+    if (
+      (analysis.object_type === 'complete_equipment' || analysis.object_type === 'uncertain') &&
+      analysis.confidence_score > 0.35
+    ) {
+      analysis.confidence_score = 0.35;
+    }
 
     // Enrich with our pricing service (overrides AI price if we have a match)
     const catalogPrice = getMaterialPrice(analysis.material_name, analysis.category);

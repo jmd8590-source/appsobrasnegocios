@@ -1,0 +1,41 @@
+name: Deploy to Cloudflare Workers
+
+# Manual trigger only, on purpose: this repository ships with no
+# deployment secrets configured. Add CLOUDFLARE_API_TOKEN and
+# CLOUDFLARE_ACCOUNT_ID (Settings → Secrets and variables → Actions)
+# before running this workflow, and switch the trigger to
+# `push: { branches: [main] }` once you want deploys to be automatic.
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & deploy (opennextjs-cloudflare)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for Cloudflare
+        run: npm run build:cf
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+          NEXT_PUBLIC_DEMO_MODE: ${{ secrets.NEXT_PUBLIC_DEMO_MODE }}
+
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy

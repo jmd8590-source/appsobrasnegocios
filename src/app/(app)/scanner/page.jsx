@@ -8,14 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { AnalysisResultForm } from '@/components/scanner/AnalysisResultForm';
+import { useLanguage } from '@/lib/i18n/LanguageProvider';
 
-const referenceOptions = [
-  { value: 'coin', label: 'Moneda 2€', icon: '🪙', description: 'Coloca una moneda de 2€ junto al material' },
-  { value: 'hand', label: 'Mano', icon: '✋', description: 'Coloca tu mano abierta junto al material' },
-  { value: 'tape', label: 'Cinta métrica', icon: '📏', description: 'Coloca una cinta métrica visible en la imagen' },
-];
+const STEPS = ['camera', 'preview', 'analyzing', 'result'];
 
 export default function ScannerPage() {
+  const { t } = useLanguage();
   const webcamRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -26,6 +24,19 @@ export default function ScannerPage() {
   const [isDemo, setIsDemo] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const [facingMode, setFacingMode] = useState('environment');
+
+  const referenceOptions = [
+    { value: 'coin', label: t('scanner.refCoin'), icon: '🪙', description: t('scanner.refCoinDesc') },
+    { value: 'hand', label: t('scanner.refHand'), icon: '✋', description: t('scanner.refHandDesc') },
+    { value: 'tape', label: t('scanner.refTape'), icon: '📏', description: t('scanner.refTapeDesc') },
+  ];
+
+  const stepLabels = {
+    camera: t('scanner.stepCapture'),
+    preview: t('scanner.stepPreview'),
+    analyzing: t('scanner.stepAnalyzing'),
+    result: t('scanner.stepResult'),
+  };
 
   const handleCapture = useCallback(() => {
     if (webcamRef.current) {
@@ -42,7 +53,7 @@ export default function ScannerPage() {
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
-      toast({ title: 'Imagen demasiado grande', description: 'El límite es 10MB', variant: 'destructive' });
+      toast({ title: t('scanner.tooLargeTitle'), description: t('scanner.tooLargeDesc'), variant: 'destructive' });
       return;
     }
 
@@ -83,21 +94,21 @@ export default function ScannerPage() {
       const data = await response.json();
 
       if (!data.success || !data.data) {
-        throw new Error(data.error ?? 'Error desconocido');
+        throw new Error(data.error ?? 'Unknown error');
       }
 
       setAnalysisResult(data.data);
       setIsDemo(data.isDemo ?? false);
       setStep('result');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Error al analizar la imagen';
-      toast({ title: 'Error de análisis', description: message, variant: 'destructive' });
+      const message = error instanceof Error ? error.message : t('scanner.analysisErrorTitle');
+      toast({ title: t('scanner.analysisErrorTitle'), description: message, variant: 'destructive' });
       setStep('preview');
     }
   };
 
   const handleSaved = () => {
-    toast({ title: '✅ Sobrante guardado', description: 'Añadido a tu inventario correctamente' });
+    toast({ title: t('scanner.savedToastTitle'), description: t('scanner.savedToastDesc') });
     handleRetake();
   };
 
@@ -106,44 +117,42 @@ export default function ScannerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col fade-in">
+    <div className="min-h-screen bg-canvas flex flex-col fade-in">
       {/* Header */}
       <div className="px-4 pt-6 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
-              <Camera className="w-5 h-5 text-amber-400" />
+            <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/25 flex items-center justify-center">
+              <Camera className="w-5 h-5 text-accent" aria-hidden="true" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-100">Escáner</h1>
-              <p className="text-xs text-slate-500">Fotografía el material para identificarlo</p>
+              <h1 className="text-xl font-bold text-ink tracking-tight">{t('scanner.title')}</h1>
+              <p className="text-xs text-ink-faint">{t('scanner.subtitle')}</p>
             </div>
           </div>
           <Link href="/manual-entry">
-            <Button variant="outline" size="sm" className="gap-2 text-xs border-slate-700 text-slate-300 hover:text-amber-400 hover:border-amber-500/50">
-              <PenSquare className="w-3.5 h-3.5 text-amber-400" />
-              Entrar a mano
+            <Button variant="outline" size="sm" className="gap-2 text-xs">
+              <PenSquare className="w-3.5 h-3.5 text-accent" aria-hidden="true" />
+              {t('scanner.enterManually')}
             </Button>
           </Link>
         </div>
 
         {/* Steps indicator */}
-        <div className="flex items-center gap-2 mt-4">
-          {['camera', 'preview', 'analyzing', 'result'].map((s, i) => (
+        <div className="flex items-center gap-2 mt-4" role="status" aria-label={stepLabels[step]}>
+          {STEPS.map((s, i) => (
             <div key={s} className="flex items-center gap-2">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                step === s ? 'bg-amber-500 text-slate-950' :
-                ['camera', 'preview', 'analyzing', 'result'].indexOf(step) > i ? 'bg-emerald-600 text-white' :
-                'bg-slate-800 text-slate-500'
+                step === s ? 'bg-accent text-accent-ink' :
+                STEPS.indexOf(step) > i ? 'bg-positive text-positive-ink' :
+                'bg-surface-2 text-ink-faint'
               }`}>
-                {['camera', 'preview', 'analyzing', 'result'].indexOf(step) > i ? '✓' : i + 1}
+                {STEPS.indexOf(step) > i ? '✓' : i + 1}
               </div>
-              {i < 3 && <div className={`flex-1 h-0.5 rounded-full ${['camera', 'preview', 'analyzing', 'result'].indexOf(step) > i ? 'bg-emerald-600' : 'bg-slate-800'}`} />}
+              {i < 3 && <div className={`flex-1 h-0.5 rounded-full ${STEPS.indexOf(step) > i ? 'bg-positive' : 'bg-edge'}`} />}
             </div>
           ))}
-          <p className="ml-2 text-xs text-slate-500 capitalize">
-            {step === 'camera' ? 'Captura' : step === 'preview' ? 'Previsualiza' : step === 'analyzing' ? 'Analizando...' : 'Resultado'}
-          </p>
+          <p className="ml-2 text-xs text-ink-faint">{stepLabels[step]}</p>
         </div>
       </div>
 
@@ -153,41 +162,42 @@ export default function ScannerPage() {
           <div className="space-y-4">
             {/* Reference selector */}
             <div>
-              <p className="text-xs text-slate-400 mb-2 font-medium">Referencia de escala (opcional):</p>
+              <p className="text-xs text-ink-muted mb-2 font-medium">{t('scanner.referenceLabel')}</p>
               <div className="flex gap-2">
                 {referenceOptions.map((ref) => (
                   <button
                     key={ref.value}
                     onClick={() => setSelectedReference(ref.value)}
+                    aria-pressed={selectedReference === ref.value}
                     className={`flex-1 py-2 px-2 rounded-xl border text-center transition-all duration-200 cursor-pointer ${
                       selectedReference === ref.value
-                        ? 'border-amber-500 bg-amber-500/10 text-amber-300'
-                        : 'border-slate-700 bg-slate-800/40 text-slate-400 hover:border-slate-600'
+                        ? 'border-accent bg-accent/10 text-accent'
+                        : 'border-edge bg-surface text-ink-muted hover:border-edge-strong'
                     }`}
                   >
-                    <span className="text-lg block">{ref.icon}</span>
+                    <span className="text-lg block" aria-hidden="true">{ref.icon}</span>
                     <span className="text-[10px] font-medium">{ref.label}</span>
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] text-slate-500 mt-1.5">
+              <p className="text-[10px] text-ink-faint mt-1.5">
                 💡 {referenceOptions.find((r) => r.value === selectedReference)?.description}
               </p>
             </div>
 
             {/* Camera view */}
-            <div className="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-800">
+            <div className="relative rounded-2xl overflow-hidden bg-surface border border-edge">
               {cameraError ? (
                 <div className="flex flex-col items-center justify-center h-72 gap-4 p-6 text-center">
-                  <AlertCircle className="w-12 h-12 text-red-400" />
+                  <AlertCircle className="w-12 h-12 text-danger" aria-hidden="true" />
                   <div>
-                    <p className="text-slate-300 font-medium mb-1">Cámara no disponible</p>
-                    <p className="text-slate-500 text-sm">{cameraError}</p>
-                    <p className="text-slate-500 text-xs mt-2">Permite el acceso a la cámara en la configuración del navegador</p>
+                    <p className="text-ink-muted font-medium mb-1">{t('scanner.cameraUnavailable')}</p>
+                    <p className="text-ink-faint text-sm">{cameraError}</p>
+                    <p className="text-ink-faint text-xs mt-2">{t('scanner.allowCameraHint')}</p>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Subir imagen
+                    <Upload className="w-4 h-4 mr-2" aria-hidden="true" />
+                    {t('scanner.uploadImage')}
                   </Button>
                 </div>
               ) : (
@@ -198,23 +208,25 @@ export default function ScannerPage() {
                     screenshotFormat="image/jpeg"
                     screenshotQuality={0.9}
                     videoConstraints={{ facingMode, width: 1280, height: 720 }}
-                    onUserMediaError={(err) => setCameraError(typeof err === 'string' ? err : 'No se puede acceder a la cámara')}
+                    onUserMediaError={(err) => setCameraError(typeof err === 'string' ? err : t('scanner.cameraUnavailable'))}
                     className="w-full aspect-video object-cover camera-feed"
                   />
                   {/* Camera overlay */}
                   <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute inset-6 border-2 border-amber-500/50 rounded-xl" />
-                    <div className="absolute top-8 left-8 w-4 h-4 border-t-2 border-l-2 border-amber-500 rounded-tl" />
-                    <div className="absolute top-8 right-8 w-4 h-4 border-t-2 border-r-2 border-amber-500 rounded-tr" />
-                    <div className="absolute bottom-8 left-8 w-4 h-4 border-b-2 border-l-2 border-amber-500 rounded-bl" />
-                    <div className="absolute bottom-8 right-8 w-4 h-4 border-b-2 border-r-2 border-amber-500 rounded-br" />
+                    <div className="absolute inset-6 border-2 border-accent/40 rounded-xl" />
+                    <div className="absolute top-8 left-8 w-4 h-4 border-t-2 border-l-2 border-accent rounded-tl" />
+                    <div className="absolute top-8 right-8 w-4 h-4 border-t-2 border-r-2 border-accent rounded-tr" />
+                    <div className="absolute bottom-8 left-8 w-4 h-4 border-b-2 border-l-2 border-accent rounded-bl" />
+                    <div className="absolute bottom-8 right-8 w-4 h-4 border-b-2 border-r-2 border-accent rounded-br" />
                   </div>
                   {/* Flip camera button */}
                   <button
                     onClick={toggleCamera}
-                    className="absolute top-3 right-3 w-9 h-9 rounded-xl bg-black/50 backdrop-blur-sm flex items-center justify-center text-white transition-colors hover:bg-black/70 cursor-pointer"
+                    aria-label={t('scanner.flipCamera')}
+                    title={t('scanner.flipCamera')}
+                    className="absolute top-3 right-3 w-9 h-9 rounded-xl bg-black/50 backdrop-blur-sm flex items-center justify-center text-white transition-colors hover:bg-black/70 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                   >
-                    <RefreshCw className="w-4 h-4" />
+                    <RefreshCw className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </>
               )}
@@ -223,47 +235,47 @@ export default function ScannerPage() {
             {/* Action buttons */}
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="w-4 h-4 mr-2" />
-                Subir foto
+                <Upload className="w-4 h-4 mr-2" aria-hidden="true" />
+                {t('scanner.uploadPhoto')}
               </Button>
               <button
                 onClick={handleCapture}
                 disabled={!!cameraError}
-                className="relative flex-1 h-12 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none shadow-lg shadow-amber-500/30 cursor-pointer"
+                className="relative flex-1 h-12 rounded-xl bg-accent hover:bg-accent-strong text-accent-ink font-semibold flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
               >
-                <Camera className="w-5 h-5" />
-                Capturar
+                <Camera className="w-5 h-5" aria-hidden="true" />
+                {t('scanner.capture')}
               </button>
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} />
+            <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} aria-label={t('scanner.uploadImage')} />
           </div>
         )}
 
         {/* STEP: Preview */}
         {step === 'preview' && capturedImage && (
           <div className="space-y-4">
-            <div className="relative rounded-2xl overflow-hidden border border-slate-800">
-              <img src={capturedImage} alt="Imagen capturada" className="w-full object-contain max-h-80" />
+            <div className="relative rounded-2xl overflow-hidden border border-edge">
+              <img src={capturedImage} alt={t('scanner.previewBadge')} className="w-full object-contain max-h-80" />
               <div className="absolute top-3 right-3">
-                <Badge variant="default" className="text-xs">Vista previa</Badge>
+                <Badge variant="default" className="text-xs">{t('scanner.previewBadge')}</Badge>
               </div>
             </div>
 
-            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 flex items-start gap-2">
-              <Info className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-              <p className="text-xs text-amber-200">
-                Asegúrate de que el material ocupa la mayor parte de la imagen y la referencia de escala (<strong>{referenceOptions.find(r => r.value === selectedReference)?.label}</strong>) es visible.
+            <div className="rounded-xl border border-accent/25 bg-accent/5 p-3 flex items-start gap-2">
+              <Info className="w-4 h-4 text-accent mt-0.5 shrink-0" aria-hidden="true" />
+              <p className="text-xs text-ink-muted">
+                {t('scanner.previewHint', { ref: referenceOptions.find((r) => r.value === selectedReference)?.label })}
               </p>
             </div>
 
             <div className="flex gap-3">
               <Button variant="outline" onClick={handleRetake} className="flex-1">
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Repetir
+                <RotateCcw className="w-4 h-4 mr-2" aria-hidden="true" />
+                {t('scanner.retake')}
               </Button>
               <Button variant="amber" onClick={handleAnalyze} className="flex-1">
-                <Zap className="w-4 h-4 mr-2" />
-                Analizar con IA
+                <Zap className="w-4 h-4 mr-2" aria-hidden="true" />
+                {t('scanner.analyzeAI')}
               </Button>
             </div>
           </div>
@@ -271,23 +283,23 @@ export default function ScannerPage() {
 
         {/* STEP: Analyzing */}
         {step === 'analyzing' && (
-          <div className="flex flex-col items-center justify-center py-20 gap-6">
+          <div className="flex flex-col items-center justify-center py-20 gap-6" role="status">
             {capturedImage && (
-              <div className="relative w-48 h-36 rounded-2xl overflow-hidden border border-amber-500/30">
-                <img src={capturedImage} alt="Analizando" className="w-full h-full object-cover opacity-60" />
+              <div className="relative w-48 h-36 rounded-2xl overflow-hidden border border-accent/25">
+                <img src={capturedImage} alt="" className="w-full h-full object-cover opacity-60" />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                  <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center animate-pulse">
-                    <Zap className="w-6 h-6 text-slate-950" />
+                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center animate-pulse">
+                    <Zap className="w-6 h-6 text-accent-ink" aria-hidden="true" />
                   </div>
                 </div>
               </div>
             )}
             <div className="text-center">
-              <div className="flex items-center gap-2 text-amber-400 mb-2 justify-center">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="font-semibold">Analizando imagen...</span>
+              <div className="flex items-center gap-2 text-accent mb-2 justify-center">
+                <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+                <span className="font-semibold">{t('scanner.analyzing')}</span>
               </div>
-              <p className="text-sm text-slate-500">La IA está identificando el material y calculando su valor</p>
+              <p className="text-sm text-ink-faint">{t('scanner.analyzingDesc')}</p>
             </div>
           </div>
         )}

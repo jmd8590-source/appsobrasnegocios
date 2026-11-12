@@ -5,6 +5,15 @@
 
 export const DEMO_USER_ID = 'demo-user-00000000-0000-0000-0000-000000000000';
 
+// Fixed anchor instead of Date.now(): this module is evaluated once on the
+// server (during SSR) and again in the browser (on hydration), at two
+// genuinely different wall-clock moments. Using Date.now() here made every
+// "created_at" a different value each time, which made the rendered
+// relative-time text ("hace Xh") differ between server and client and
+// broke hydration (React discarded and fully re-rendered the tree).
+// A fixed anchor keeps every evaluation byte-identical.
+const DEMO_ANCHOR = new Date('2026-11-12T12:00:00.000Z').getTime();
+
 export const DEMO_MATERIALS = [
   {
     id: 'mat-cobre-limpio',
@@ -69,8 +78,8 @@ export const DEMO_SCRAPS = [
     reference_object: 'hand',
     status: 'available',
     is_demo: true,
-    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(DEMO_ANCHOR - 2 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(DEMO_ANCHOR - 2 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 'scrap-002',
@@ -90,8 +99,8 @@ export const DEMO_SCRAPS = [
     reference_object: 'tape',
     status: 'available',
     is_demo: true,
-    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(DEMO_ANCHOR - 5 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(DEMO_ANCHOR - 5 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 'scrap-003',
@@ -111,8 +120,8 @@ export const DEMO_SCRAPS = [
     reference_object: 'tape',
     status: 'in_lot',
     is_demo: true,
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(DEMO_ANCHOR - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(DEMO_ANCHOR - 1 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 'scrap-004',
@@ -132,8 +141,8 @@ export const DEMO_SCRAPS = [
     reference_object: 'coin',
     status: 'available',
     is_demo: true,
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(DEMO_ANCHOR - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(DEMO_ANCHOR - 2 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 'scrap-005',
@@ -153,8 +162,8 @@ export const DEMO_SCRAPS = [
     reference_object: 'hand',
     status: 'available',
     is_demo: true,
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(DEMO_ANCHOR - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(DEMO_ANCHOR - 3 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 'scrap-006',
@@ -174,8 +183,8 @@ export const DEMO_SCRAPS = [
     reference_object: 'tape',
     status: 'available',
     is_demo: true,
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(DEMO_ANCHOR - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(DEMO_ANCHOR - 4 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 'scrap-007',
@@ -195,8 +204,8 @@ export const DEMO_SCRAPS = [
     reference_object: 'coin',
     status: 'sold',
     is_demo: true,
-    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(DEMO_ANCHOR - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(DEMO_ANCHOR - 6 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 'scrap-008',
@@ -216,8 +225,8 @@ export const DEMO_SCRAPS = [
     reference_object: 'hand',
     status: 'available',
     is_demo: true,
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(DEMO_ANCHOR - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(DEMO_ANCHOR - 5 * 24 * 60 * 60 * 1000).toISOString(),
   },
 ];
 
@@ -242,8 +251,8 @@ Precio orientativo de mercado calculado por ScrapLens. Negociable según volumen
     status: 'active',
     share_token: 'demo-share-token-abc123',
     is_demo: true,
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(DEMO_ANCHOR - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(DEMO_ANCHOR - 1 * 24 * 60 * 60 * 1000).toISOString(),
     scraps: [DEMO_SCRAPS[1], DEMO_SCRAPS[2]],
   },
 ];
@@ -268,12 +277,18 @@ export const DEMO_CHART_DATA = [
   { date: '18 Ago', value: 57.80, scraps: 1 },
 ];
 
-// Demo AI analysis responses for scanner testing
+// Demo AI analysis responses for scanner testing. Each one also carries the
+// newer object_type/estimated_dimensions_cm/weight_reasoning fields so the
+// demo experience matches exactly what a real Gemini response now looks
+// like (see src/lib/gemini/prompts.js and src/lib/validations/scrap.js).
 export const DEMO_ANALYSIS_RESPONSES = [
   {
     material_name: 'Cobre limpio',
     category: 'metal',
     subtype: 'cobre',
+    object_type: 'loose_scrap',
+    estimated_dimensions_cm: '40x15x15 cm aprox (referencia: mano)',
+    weight_reasoning: 'Ovillo de cable suelto, mayormente hueco; densidad efectiva baja pese a ser cobre macizo en la sección del hilo.',
     confidence_score: 0.91,
     estimated_weight_kg: 5.2,
     suggested_price_per_kg: 6.80,
@@ -284,6 +299,9 @@ export const DEMO_ANALYSIS_RESPONSES = [
     material_name: 'Aluminio perfiles',
     category: 'metal',
     subtype: 'aluminio',
+    object_type: 'loose_scrap',
+    estimated_dimensions_cm: '150x8x8 cm aprox (referencia: cinta métrica)',
+    weight_reasoning: 'Perfiles huecos extruidos, no macizos; volumen real de aluminio mucho menor que el volumen aparente.',
     confidence_score: 0.87,
     estimated_weight_kg: 12.8,
     suggested_price_per_kg: 1.40,
@@ -294,11 +312,30 @@ export const DEMO_ANALYSIS_RESPONSES = [
     material_name: 'Latón',
     category: 'metal',
     subtype: 'latón',
+    object_type: 'loose_scrap',
+    estimated_dimensions_cm: '10x10x8 cm aprox (referencia: moneda 2€)',
+    weight_reasoning: 'Piezas macizas pequeñas (válvulas/racores); densidad de latón ~8.5 g/cm³ aplicada sobre volumen estimado.',
     confidence_score: 0.83,
     estimated_weight_kg: 2.1,
     suggested_price_per_kg: 3.60,
     estimated_total_value: 7.56,
     condition_notes: 'Componentes de latón (válvulas, racores). Color y aspecto característico del latón. Mix de diferentes tamaños.',
+  },
+  {
+    // Demonstrates the exact failure mode a reviewer hit in production: a
+    // complete, functional pallet truck confidently "priced" at an
+    // impossible weight. Now flagged honestly instead of guessed.
+    material_name: 'Transpaleta manual (equipo completo)',
+    category: 'metal',
+    subtype: 'acero',
+    object_type: 'complete_equipment',
+    estimated_dimensions_cm: '150x55x120 cm aprox (referencia: persona)',
+    weight_reasoning: 'Se reconoce como transpaleta manual completa y funcional, no como material suelto; el peso real típico (65-100kg) no se puede fiar de una estimación volumétrica por foto.',
+    confidence_score: 0.3,
+    estimated_weight_kg: 75,
+    suggested_price_per_kg: 0.22,
+    estimated_total_value: 16.5,
+    condition_notes: 'Esto parece un equipo completo y funcional (transpaleta), no un material de scrap suelto. Pésalo manualmente o confirma que realmente va a chatarra antes de usar esta estimación como referencia.',
   },
 ];
 

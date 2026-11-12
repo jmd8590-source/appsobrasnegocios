@@ -110,7 +110,6 @@ Abre [http://localhost:3000](http://localhost:3000) → acceso automático en mo
 npm run dev          # Servidor de desarrollo
 npm run build        # Build de producción (Next.js)
 npm run lint         # ESLint
-npm run typecheck    # TypeScript check sin emit
 npm run build:cf     # Build para Cloudflare Workers
 npm run deploy       # Deploy en Cloudflare (requiere wrangler login)
 ```
@@ -236,16 +235,27 @@ src/
 │   ├── scanner/         # Componentes del escáner
 │   └── shared/          # AppNav, EmptyState
 ├── lib/
-│   ├── supabase/        # client.ts, server.ts
-│   ├── gemini/          # client.ts, prompts.ts
-│   ├── pricing/         # service.ts (desacoplado, sustituible)
+│   ├── supabase/        # client.js, server.js
+│   ├── gemini/          # client.js, prompts.js
+│   ├── pricing/         # service.js (desacoplado, sustituible)
+│   ├── listings/        # service.js (lotes — Supabase + localStorage)
 │   ├── demo/            # Datos demo realistas
 │   ├── validations/     # Zod schemas
-│   └── utils.ts         # Formatters, helpers, cn()
-├── types/               # Tipos TypeScript globales
-├── hooks/               # use-toast
-└── middleware.ts         # Auth guard Supabase SSR
+│   ├── i18n/            # dictionaries.js (ES/EN) + LanguageProvider
+│   ├── theme/            # ThemeProvider (claro/oscuro)
+│   └── utils.js         # Formatters, helpers, cn()
+└── hooks/               # use-toast
 ```
+
+Todo el proyecto es JavaScript/JSX (no TypeScript). No hay `middleware.ts`: el guard de sesión vive en `src/lib/auth/session.js` (`getAuthState()`), consumido por los layouts de `(app)` y `(auth)` — Cloudflare Workers vía `@opennextjs/cloudflare` no soporta el middleware Node.js tradicional.
+
+### Idiomas, tema y accesibilidad
+
+- **ES/EN en toda la app**: selector de idioma arriba a la derecha, persistido en cookie + localStorage (`src/lib/i18n/`).
+- **Modo claro/oscuro**: interruptor junto al selector de idioma, sin parpadeo (script bloqueante en `<head>`), persistido igual que el idioma.
+- **Accesibilidad**: contraste AA en ambos temas, zoom del navegador sin bloquear, `aria-label` en botones de solo icono, `prefers-reduced-motion` respetado, skip-link al contenido principal.
+- **Cookies**: banner de consentimiento (aceptar todas / solo necesarias) antes de guardar nada que no sea estrictamente necesario.
+- **Tour guiado**: botón con icono de brújula arriba a la derecha, explica cada sección de la app.
 
 ---
 

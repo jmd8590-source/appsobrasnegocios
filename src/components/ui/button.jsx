@@ -2,13 +2,13 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const variantStyles = {
-  default: 'bg-slate-700 text-slate-100 hover:bg-slate-600 border border-slate-600',
-  destructive: 'bg-red-600 text-white hover:bg-red-700 border border-red-700',
-  outline: 'border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-slate-100 bg-transparent',
-  ghost: 'text-slate-300 hover:bg-slate-800 hover:text-slate-100 bg-transparent',
-  link: 'text-amber-400 underline-offset-4 hover:underline bg-transparent',
-  amber: 'bg-amber-500 text-slate-950 hover:bg-amber-400 font-semibold border border-amber-400',
-  emerald: 'bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-500',
+  default: 'bg-surface-2 text-ink hover:bg-edge border border-edge-strong',
+  destructive: 'bg-danger text-danger-ink hover:opacity-90 border border-danger',
+  outline: 'border border-edge-strong text-ink-muted hover:bg-surface-2 hover:text-ink bg-transparent',
+  ghost: 'text-ink-muted hover:bg-surface-2 hover:text-ink bg-transparent',
+  link: 'text-accent underline-offset-4 hover:underline bg-transparent',
+  amber: 'bg-accent text-accent-ink hover:bg-accent-strong font-semibold border border-accent-strong',
+  emerald: 'bg-positive text-positive-ink hover:opacity-90 border border-positive',
 };
 
 const sizeStyles = {
@@ -26,7 +26,7 @@ const Button = React.forwardRef(
         className={cn(
           'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium',
           'transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none cursor-pointer',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
           variantStyles[variant],
           sizeStyles[size],
           className

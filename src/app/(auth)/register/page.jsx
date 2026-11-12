@@ -7,11 +7,15 @@ import { Zap, Mail, Lock, User, Building2, AlertCircle, Loader2, Eye, EyeOff } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 import { createClient } from '@/lib/supabase/client';
 import { isDemoMode } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n/LanguageProvider';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [form, setForm] = useState({ name: '', company: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,76 +52,123 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+    <main id="main-content" className="min-h-screen bg-canvas flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <LanguageSwitcher />
+        <ThemeToggle />
+      </div>
+
       <div className="w-full max-w-sm fade-in">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500 flex items-center justify-center shadow-2xl shadow-amber-500/30 mb-4">
-            <Zap className="w-8 h-8 text-slate-950" />
+          <div className="w-14 h-14 rounded-2xl bg-accent flex items-center justify-center shadow-xl mb-4">
+            <Zap className="w-8 h-8 text-accent-ink" aria-hidden="true" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-100">ScrapLens</h1>
-          <p className="text-sm text-slate-400 mt-1">Gestión de materiales de recuperación</p>
+          <h1 className="text-2xl font-bold text-ink">{t('common.appName')}</h1>
+          <p className="text-sm text-ink-muted mt-1">{t('auth.tagline')}</p>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-          <h2 className="text-lg font-semibold text-slate-100 mb-5">Registro</h2>
+        <div className="bg-surface border border-edge rounded-2xl p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-ink mb-5">{t('auth.registerTitle')}</h2>
 
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
-              <Label htmlFor="name">Nombre completo</Label>
+              <Label htmlFor="name">{t('auth.fullName')}</Label>
               <div className="relative mt-1">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <Input id="name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Tu nombre" className="pl-9" required />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" aria-hidden="true" />
+                <Input
+                  id="name"
+                  value={form.name}
+                  onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                  placeholder={t('auth.fullNamePlaceholder')}
+                  className="pl-9"
+                  required
+                  autoComplete="name"
+                />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="company">Empresa <span className="text-slate-500">(opcional)</span></Label>
+              <Label htmlFor="company">
+                {t('auth.company')} <span className="text-ink-faint">{t('auth.optional')}</span>
+              </Label>
               <div className="relative mt-1">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <Input id="company" value={form.company} onChange={(e) => setForm((p) => ({ ...p, company: e.target.value }))} placeholder="Nombre de empresa" className="pl-9" />
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" aria-hidden="true" />
+                <Input
+                  id="company"
+                  value={form.company}
+                  onChange={(e) => setForm((p) => ({ ...p, company: e.target.value }))}
+                  placeholder={t('auth.companyPlaceholder')}
+                  className="pl-9"
+                  autoComplete="organization"
+                />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <div className="relative mt-1">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <Input id="email" type="email" value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} placeholder="tu@empresa.com" className="pl-9" required autoComplete="email" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" aria-hidden="true" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                  placeholder="tu@empresa.com"
+                  className="pl-9"
+                  required
+                  autoComplete="email"
+                />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <div className="relative mt-1">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <Input id="password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))} placeholder="Mín. 8 caracteres" className="pl-9 pr-10" required minLength={8} autoComplete="new-password" />
-                <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 cursor-pointer">
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" aria-hidden="true" />
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+                  placeholder={t('auth.minChars')}
+                  className="pl-9 pr-10"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                  aria-pressed={showPassword}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink-muted cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-red-950/50 border border-red-800 text-red-300 text-sm">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div role="alert" className="flex items-center gap-2 p-3 rounded-xl bg-danger-ink border border-danger/40 text-danger text-sm">
+                <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
                 {error}
               </div>
             )}
 
             <Button type="submit" variant="amber" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Crear cuenta
+              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
+              {t('auth.createAccount')}
             </Button>
           </form>
         </div>
 
-        <p className="text-center text-sm text-slate-500 mt-5">
-          ¿Ya tienes cuenta?{' '}
-          <Link href="/login" className="text-amber-400 hover:text-amber-300 font-medium">
-            Inicia sesión
+        <p className="text-center text-sm text-ink-muted mt-5">
+          {t('auth.haveAccount')}{' '}
+          <Link href="/login" className="text-accent hover:text-accent-strong font-medium">
+            {t('auth.signIn')}
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

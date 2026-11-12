@@ -33,10 +33,10 @@ const Toast = React.forwardRef(({ className, variant = 'default', ...props }, re
       'data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full',
       'data-[state=open]:slide-in-from-bottom-full',
       variant === 'destructive'
-        ? 'border-red-800 bg-red-950 text-red-100'
+        ? 'border-danger bg-danger-ink text-danger'
         : variant === 'success'
-        ? 'border-emerald-800 bg-emerald-950 text-emerald-100'
-        : 'border-slate-700 bg-slate-900 text-slate-100',
+        ? 'border-positive bg-positive-ink text-positive'
+        : 'border-edge bg-surface text-ink',
       className
     )}
     {...props}
@@ -49,7 +49,7 @@ const ToastAction = React.forwardRef(({ className, ...props }, ref) => (
     ref={ref}
     className={cn(
       'inline-flex h-8 shrink-0 items-center justify-center rounded-md border px-3 text-xs font-medium',
-      'border-slate-600 hover:bg-slate-800 transition-colors',
+      'border-edge-strong hover:bg-surface-2 transition-colors',
       className
     )}
     {...props}
@@ -61,13 +61,14 @@ const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      'absolute right-2 top-2 rounded p-1 text-slate-400 hover:text-slate-100 transition-colors',
+      'absolute right-2 top-2 rounded p-1 text-ink-muted hover:text-ink transition-colors',
       className
     )}
     toast-close=""
+    aria-label="Cerrar notificación / Close notification"
     {...props}
   >
-    <X className="h-3.5 w-3.5" />
+    <X className="h-3.5 w-3.5" aria-hidden="true" />
   </ToastPrimitives.Close>
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;

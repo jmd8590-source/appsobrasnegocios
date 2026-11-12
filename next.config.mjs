@@ -6,6 +6,19 @@ const nextConfig = {
   // Disable Next.js dev indicator badge ("N" logo in dev)
   devIndicators: false,
 
+  // Production hardening: strip console.* calls from client bundles
+  // (keeps console.error for real crash diagnostics). SWC minification
+  // is already on by default, and productionBrowserSourceMaps defaults
+  // to false — together this is the safe ceiling for "obfuscation" on
+  // this stack. A real JS obfuscator (identifier mangling, control-flow
+  // flattening) run as a post-build step is NOT applied here: it tends
+  // to break React hydration matching and the OpenNext/Cloudflare
+  // Workers module format, trading a working app for a false sense of
+  // security against a determined reverse-engineer anyway.
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
+  },
+
   // Cloudflare Workers compatibility
   experimental: {
     // Required for @opennextjs/cloudflare

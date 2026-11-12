@@ -2,16 +2,16 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const variantStyles = {
-  default: 'bg-slate-700 text-slate-200 border-slate-600',
-  outline: 'bg-transparent border-slate-600 text-slate-300',
-  metal: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  wood: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  plastic: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  construction: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
-  available: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  in_lot: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  sold: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  discarded: 'bg-red-500/20 text-red-400 border-red-500/30',
+  default: 'bg-surface-2 text-ink-muted border-edge-strong',
+  outline: 'bg-transparent border-edge-strong text-ink-muted',
+  metal: 'bg-accent/15 text-accent border-accent/30',
+  wood: 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30',
+  plastic: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
+  construction: 'bg-ink-faint/15 text-ink-muted border-ink-faint/30',
+  available: 'bg-positive/15 text-positive border-positive/30',
+  in_lot: 'bg-accent/15 text-accent border-accent/30',
+  sold: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
+  discarded: 'bg-danger/15 text-danger border-danger/30',
 };
 
 const Badge = React.forwardRef(

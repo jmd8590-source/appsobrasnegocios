@@ -10,16 +10,37 @@ export const ScrapStatusSchema = z.enum(['available', 'in_lot', 'sold', 'discard
 
 export const ReferenceObjectSchema = z.enum(['coin', 'hand', 'tape']);
 
+// Whether the photographed item is loose/broken recoverable material, or an
+// intact, functional object the AI should NOT confidently price as scrap
+// (e.g. a whole pallet truck, a working appliance, a vehicle part still
+// assembled). Forcing the model to classify this — and clamping confidence
+// server-side when it says "complete_equipment" — is what catches cases
+// like a manual pallet truck (real weight ~65-100kg) getting guessed at an
+// impossible 15kg: instead of a confidently wrong number, the UI shows a
+// clear "verify this manually" warning.
+export const ScrapObjectTypeSchema = z.enum([
+  'loose_scrap',
+  'complete_equipment',
+  'structural_piece',
+  'uncertain',
+]);
+
 // AI Analysis output schema (strict validation)
 export const ScrapAnalysisSchema = z.object({
   material_name: z.string().min(1).max(100),
   category: MaterialCategorySchema,
   subtype: z.string().min(1).max(50),
+  object_type: ScrapObjectTypeSchema.optional().default('uncertain'),
   confidence_score: z.number().min(0).max(1),
   estimated_weight_kg: z.number().positive().max(50000),
   suggested_price_per_kg: z.number().min(0).max(100000),
   estimated_total_value: z.number().min(0),
   condition_notes: z.string().max(500),
+  // Optional, for transparency in the UI and to force the model to reason
+  // step by step instead of guessing a bare number (both tend to measurably
+  // improve the estimate itself, not just how it's explained).
+  estimated_dimensions_cm: z.string().max(120).optional(),
+  weight_reasoning: z.string().max(400).optional(),
 });
 
 // Analyze scrap API input
@@ -42,8 +63,12 @@ export const ScrapFormSchema = z.object({
 });
 
 // Listing generation input
+// NOTE: scrap ids are NOT guaranteed to be UUIDs — demo and locally-created
+// scraps use ids like "scrap-001" or "scrap-abc123-<timestamp>". Requiring
+// `.uuid()` here made this schema reject every real request and silently
+// broke AI listing generation (the API returned 400, the client ignored it).
 export const GenerateListingInputSchema = z.object({
-  scrapIds: z.array(z.string().uuid()).min(1, 'Selecciona al menos un sobrante').max(50),
+  scrapIds: z.array(z.string().min(1)).min(1, 'Selecciona al menos un sobrante').max(50),
 });
 
 // Listing form validation
