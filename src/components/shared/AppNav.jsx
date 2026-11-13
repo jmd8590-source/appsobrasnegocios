@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { LayoutDashboard, Package, Camera, PenSquare, Layers, LogOut, Zap } from 'lucide-react';
+import { LayoutDashboard, Package, Camera, PenSquare, Layers, LogOut, Zap, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
@@ -76,8 +76,21 @@ export function AppNav() {
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="px-3 pb-4 border-t border-edge pt-4">
+        {/* Account & logout */}
+        <div className="px-3 pb-4 border-t border-edge pt-4 space-y-1">
+          <Link
+            href="/account"
+            aria-current={pathname.startsWith('/account') ? 'page' : undefined}
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
+              pathname.startsWith('/account')
+                ? 'bg-surface-2 text-ink'
+                : 'text-ink-muted hover:bg-surface-2 hover:text-ink'
+            )}
+          >
+            <UserCircle className="w-5 h-5" aria-hidden="true" />
+            {t('nav.account')}
+          </Link>
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-ink-muted hover:bg-surface-2 hover:text-ink transition-all duration-200 w-full cursor-pointer"
@@ -108,6 +121,14 @@ export function AppNav() {
           <TourTriggerButton onClick={tour.start} />
           <LanguageSwitcher />
           <ThemeToggle />
+          <Link
+            href="/account"
+            aria-label={t('nav.account')}
+            aria-current={pathname.startsWith('/account') ? 'page' : undefined}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-edge bg-surface-2 text-ink-muted hover:text-ink hover:border-edge-strong transition-colors"
+          >
+            <UserCircle className="w-4 h-4" aria-hidden="true" />
+          </Link>
           <button
             onClick={handleLogout}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-ink-muted hover:text-danger hover:bg-danger/10 border border-edge transition-all cursor-pointer"
