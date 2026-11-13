@@ -3,36 +3,63 @@ import { DEMO_LISTINGS } from '@/lib/demo/data';
 
 // =====================================================
 // ScrapLens — Listings (Lotes) Service
-// Mirrors scraps/service.js: Supabase when authenticated,
-// localStorage fallback otherwise. Fixes the bug where
-// created lots only lived in React state and disappeared
-// on reload.
+//
+// Same rule as scraps/service.js: a real, authenticated account is backed
+// by Supabase ONLY. An empty result means that account genuinely has no
+// lots yet — it must never fall back to the shared localStorage bucket or
+// DEMO_LISTINGS. Only a session with no authenticated user (demo / no
+// backend configured) uses localStorage.
 // =====================================================
 
 const STORAGE_KEY = 'scraplens_user_listings_v1';
 
-export async function getListings() {
+// createClient() throws SYNCHRONOUSLY (not a rejected promise) when
+// Supabase isn't configured — with no backend, there's nothing to check
+// a session against, so treat that exactly like "no user".
+function getSupabaseClientSafe() {
   try {
-    const supabase = createClient();
+    return createClient();
+  } catch (err) {
+    console.warn('[listings] Supabase client unavailable (not configured):', err);
+    return null;
+  }
+}
+
+async function getCurrentUser() {
+  const supabase = getSupabaseClientSafe();
+  if (!supabase) return { supabase: null, user: null };
+  try {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    return { supabase, user };
+  } catch (err) {
+    console.warn('[listings] Supabase auth check failed:', err);
+    return { supabase, user: null };
+  }
+}
 
-    if (user) {
+export async function getListings() {
+  const { supabase, user } = await getCurrentUser();
+
+  if (user) {
+    try {
       const { data, error } = await supabase
         .from('listings')
         .select('*, listing_scraps(scrap_id, scraps(*))')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        return data.map((listing) => ({
-          ...listing,
-          scraps: (listing.listing_scraps ?? []).map((ls) => ls.scraps).filter(Boolean),
-        }));
-      }
+      if (error) throw error;
+      return (data ?? []).map((listing) => ({
+        ...listing,
+        scraps: (listing.listing_scraps ?? []).map((ls) => ls.scraps).filter(Boolean),
+      }));
+    } catch (err) {
+      console.error('[listings] Supabase fetch failed for authenticated user:', err);
+      // Fail closed: never show demo/local data to a real account.
+      return [];
     }
-  } catch (err) {
-    console.warn('[listings] Supabase fetch fallback to local:', err);
   }
 
   if (typeof window !== 'undefined') {
@@ -53,9 +80,42 @@ export async function getListings() {
 }
 
 export async function createListing(listing) {
+  const { supabase, user } = await getCurrentUser();
+
+  if (user) {
+    const { data, error } = await supabase
+      .from('listings')
+      .insert({
+        user_id: user.id,
+        title: listing.title,
+        description: listing.description ?? '',
+        total_value: listing.total_value ?? 0,
+        total_weight_kg: listing.total_weight_kg ?? 0,
+        status: listing.status ?? 'draft',
+        is_demo: false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[listings] Supabase insert error:', error);
+      throw error;
+    }
+
+    const scrapIds = (listing.scraps ?? []).map((s) => s.id).filter(Boolean);
+    if (scrapIds.length > 0) {
+      const { error: linkError } = await supabase
+        .from('listing_scraps')
+        .insert(scrapIds.map((scrap_id) => ({ listing_id: data.id, scrap_id })));
+      if (linkError) console.error('[listings] Supabase listing_scraps link error:', linkError);
+    }
+
+    return { ...data, scraps: listing.scraps ?? [] };
+  }
+
+  // Demo / unauthenticated: localStorage only.
   const timestamp = new Date().toISOString();
   const randomSuffix = Math.random().toString(36).substring(2, 9);
-
   const newListing = {
     id: `lot-${randomSuffix}-${Date.now()}`,
     user_id: 'local-user',
@@ -81,45 +141,21 @@ export async function createListing(listing) {
     }
   }
 
-  try {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      const { data, error } = await supabase
-        .from('listings')
-        .insert({
-          user_id: user.id,
-          title: newListing.title,
-          description: newListing.description,
-          total_value: newListing.total_value,
-          total_weight_kg: newListing.total_weight_kg,
-          status: newListing.status,
-          is_demo: false,
-        })
-        .select()
-        .single();
-
-      if (!error && data) {
-        const scrapIds = (listing.scraps ?? []).map((s) => s.id).filter(Boolean);
-        if (scrapIds.length > 0) {
-          await supabase
-            .from('listing_scraps')
-            .insert(scrapIds.map((scrap_id) => ({ listing_id: data.id, scrap_id })));
-        }
-        return { ...data, scraps: listing.scraps ?? [] };
-      }
-    }
-  } catch (err) {
-    console.warn('[listings] Supabase insert error:', err);
-  }
-
   return newListing;
 }
 
 export async function removeListing(id) {
+  const { supabase, user } = await getCurrentUser();
+
+  if (user) {
+    const { error } = await supabase.from('listings').delete().eq('id', id).eq('user_id', user.id);
+    if (error) {
+      console.error('[listings] Supabase delete error:', error);
+      throw error;
+    }
+    return;
+  }
+
   if (typeof window !== 'undefined') {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -131,22 +167,24 @@ export async function removeListing(id) {
       console.warn('[listings] LocalStorage delete error:', e);
     }
   }
-
-  try {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('listings').delete().eq('id', id);
-    }
-  } catch (err) {
-    console.warn('[listings] Supabase delete error:', err);
-  }
 }
 
 export async function updateListingStatus(id, status) {
+  const { supabase, user } = await getCurrentUser();
   const timestamp = new Date().toISOString();
+
+  if (user) {
+    const { error } = await supabase
+      .from('listings')
+      .update({ status, updated_at: timestamp })
+      .eq('id', id)
+      .eq('user_id', user.id);
+    if (error) {
+      console.error('[listings] Supabase update error:', error);
+      throw error;
+    }
+    return;
+  }
 
   if (typeof window !== 'undefined') {
     try {
@@ -159,17 +197,5 @@ export async function updateListingStatus(id, status) {
     } catch (e) {
       console.warn('[listings] LocalStorage update error:', e);
     }
-  }
-
-  try {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('listings').update({ status, updated_at: timestamp }).eq('id', id);
-    }
-  } catch (err) {
-    console.warn('[listings] Supabase update error:', err);
   }
 }

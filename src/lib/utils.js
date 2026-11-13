@@ -96,6 +96,43 @@ export function getConfidenceColor(score) {
   return 'text-red-400';
 }
 
+// Aggregates scraps into a day-by-day recovered-value series for the
+// dashboard chart. Computed from whatever scraps were actually loaded
+// (real account or demo) instead of a separate hardcoded series, so a
+// real account's chart reflects its real activity instead of fixed demo
+// dates that don't even match its own data.
+export function computeDailyValueChart(scraps, { days = 7, locale = 'es-ES' } = {}) {
+  const now = new Date();
+  const buckets = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    buckets.push({ date: d, value: 0, scraps: 0 });
+  }
+
+  for (const scrap of scraps) {
+    const created = new Date(scrap.created_at);
+    const bucket = buckets.find(
+      (b) =>
+        b.date.getFullYear() === created.getFullYear() &&
+        b.date.getMonth() === created.getMonth() &&
+        b.date.getDate() === created.getDate()
+    );
+    if (bucket) {
+      bucket.value += Number(scrap.total_value) || 0;
+      bucket.scraps += 1;
+    }
+  }
+
+  const formatter = new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short' });
+  return buckets.map((b) => ({
+    date: formatter.format(b.date),
+    value: Math.round(b.value * 100) / 100,
+    scraps: b.scraps,
+  }));
+}
+
 export function truncateText(text, maxLength) {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength - 3) + '...';
@@ -129,8 +166,27 @@ export function getMimeType(file) {
   return file.type || 'image/jpeg';
 }
 
+// Whether Supabase has real credentials configured (vs. missing, or still
+// the placeholder URL from .env.example). This reflects what the
+// deployment is actually capable of — not whether any one visitor happens
+// to be browsing anonymously.
+export function isSupabaseConfigured() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return Boolean(url) && url !== 'https://your-project.supabase.co';
+}
+
+// True only when there's no real backend to talk to at all. Used to gate
+// "skip Supabase entirely" code paths (login/register/forgot-password
+// bypass, local-only session check).
+//
+// Deliberately NOT driven by NEXT_PUBLIC_DEMO_MODE on its own anymore: that
+// used to force every visitor — including someone who had just registered
+// a real account — into the shared demo/local experience whenever the flag
+// was left on, even after Supabase was fully configured. A real account
+// must always be able to register and log in for real once a backend
+// exists; the only legitimate way into the demo experience from here on is
+// the explicit "Explorar versión demo" button (see scraplens_demo_session
+// cookie in getAuthState()).
 export function isDemoMode() {
-  return process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ||
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://your-project.supabase.co';
+  return !isSupabaseConfigured();
 }

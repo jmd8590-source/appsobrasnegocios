@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Camera, PenSquare, TrendingUp, Package, Layers, Weight, ArrowRight, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,16 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import { useTheme } from '@/lib/theme/ThemeProvider';
-import {
-  DEMO_SCRAPS,
-  DEMO_STATS,
-  DEMO_CHART_DATA,
-} from '@/lib/demo/data';
+import { DEMO_SCRAPS, DEMO_LISTINGS } from '@/lib/demo/data';
 import { getScraps } from '@/lib/scraps/service';
+import { getListings } from '@/lib/listings/service';
 import {
   formatCurrency,
   formatWeight,
   formatRelativeTime,
+  computeDailyValueChart,
 } from '@/lib/utils';
 import {
   AreaChart,
@@ -28,9 +26,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-
-const stats = DEMO_STATS;
-const chartData = DEMO_CHART_DATA;
 
 function CustomTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
@@ -45,18 +40,20 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export default function DashboardPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { theme } = useTheme();
   // Recharts needs literal colors (no CSS vars) — only the grid line
   // differs enough between themes to matter; the tick color (--ink-faint)
   // happens to be identical in both palettes.
   const gridColor = theme === 'light' ? '#e3e3e0' : '#26282e';
   const [scraps, setScraps] = useState(DEMO_SCRAPS);
+  const [listings, setListings] = useState(DEMO_LISTINGS);
 
   useEffect(() => {
     async function loadData() {
-      const data = await getScraps();
-      setScraps(data);
+      const [scrapsData, listingsData] = await Promise.all([getScraps(), getListings()]);
+      setScraps(scrapsData);
+      setListings(listingsData);
     }
     loadData();
   }, []);
@@ -65,6 +62,13 @@ export default function DashboardPage() {
   const totalWeight = scraps.reduce((acc, s) => acc + s.weight_kg, 0);
   const totalCount = scraps.length;
   const recentScraps = scraps.slice(0, 5);
+
+  // Computed from whatever was actually loaded (real account or demo) —
+  // never a fixed, unrelated demo series.
+  const chartData = useMemo(
+    () => computeDailyValueChart(scraps, { locale: lang === 'en' ? 'en-US' : 'es-ES' }),
+    [scraps, lang]
+  );
 
   const dynamicKpiCards = [
     {
@@ -93,7 +97,7 @@ export default function DashboardPage() {
     },
     {
       label: t('dashboard.kpiActiveLots'),
-      value: stats.total_lots.toString(),
+      value: listings.length.toString(),
       icon: Layers,
       color: 'text-purple-700 dark:text-purple-400',
       bgColor: 'bg-purple-500/10 border-purple-500/20',

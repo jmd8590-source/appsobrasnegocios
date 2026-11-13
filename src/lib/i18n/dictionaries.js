@@ -119,8 +119,10 @@ const es = {
     deleteConfirm: '¿Eliminar {{name}}? Esta acción no se puede deshacer.',
     deletedToastTitle: 'Sobrante eliminado',
     deletedToastDesc: '{{name}} eliminado del inventario',
+    deleteErrorTitle: 'No se pudo eliminar el sobrante',
     savedToastTitle: 'Cambios guardados',
     savedToastDesc: 'Sobrante actualizado correctamente',
+    saveErrorTitle: 'No se pudieron guardar los cambios',
   },
   statusLabel: {
     available: 'Disponible',
@@ -447,8 +449,10 @@ const en = {
     deleteConfirm: 'Delete {{name}}? This action cannot be undone.',
     deletedToastTitle: 'Scrap deleted',
     deletedToastDesc: '{{name}} removed from inventory',
+    deleteErrorTitle: 'Could not delete the scrap',
     savedToastTitle: 'Changes saved',
     savedToastDesc: 'Scrap updated successfully',
+    saveErrorTitle: 'Could not save the changes',
   },
   statusLabel: {
     available: 'Available',

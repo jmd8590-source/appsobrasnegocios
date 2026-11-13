@@ -55,29 +55,37 @@ export default function InventoryPage() {
   const hasActiveFilters = Boolean(search) || categoryFilter !== 'all' || statusFilter !== 'all';
 
   const handleDelete = async (scrap) => {
-    await removeScrap(scrap.id);
-    setScraps((prev) => prev.filter((s) => s.id !== scrap.id));
-    setDeletingScrap(null);
-    toast({
-      title: t('inventory.deletedToastTitle'),
-      description: t('inventory.deletedToastDesc', { name: scrap.material_name }),
-    });
+    try {
+      await removeScrap(scrap.id);
+      setScraps((prev) => prev.filter((s) => s.id !== scrap.id));
+      setDeletingScrap(null);
+      toast({
+        title: t('inventory.deletedToastTitle'),
+        description: t('inventory.deletedToastDesc', { name: scrap.material_name }),
+      });
+    } catch {
+      toast({ title: t('inventory.deleteErrorTitle'), variant: 'destructive' });
+    }
   };
 
   const handleSaveEdit = async (updated) => {
-    await updateScrapItem(updated.id, {
-      material_name: updated.material_name,
-      category: updated.category,
-      subtype: updated.subtype || undefined,
-      weight_kg: updated.weight_kg,
-      price_per_kg: updated.price_per_kg,
-      total_value: updated.total_value,
-      condition_notes: updated.condition_notes || '',
-      status: updated.status,
-    });
-    setScraps((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
-    setEditingScrap(null);
-    toast({ title: t('inventory.savedToastTitle'), description: t('inventory.savedToastDesc') });
+    try {
+      await updateScrapItem(updated.id, {
+        material_name: updated.material_name,
+        category: updated.category,
+        subtype: updated.subtype || undefined,
+        weight_kg: updated.weight_kg,
+        price_per_kg: updated.price_per_kg,
+        total_value: updated.total_value,
+        condition_notes: updated.condition_notes || '',
+        status: updated.status,
+      });
+      setScraps((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+      setEditingScrap(null);
+      toast({ title: t('inventory.savedToastTitle'), description: t('inventory.savedToastDesc') });
+    } catch {
+      toast({ title: t('inventory.saveErrorTitle'), variant: 'destructive' });
+    }
   };
 
   return (

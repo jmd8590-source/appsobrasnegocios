@@ -1,44 +1,74 @@
 import { createClient } from '@/lib/supabase/client';
 import { DEMO_SCRAPS } from '@/lib/demo/data';
 
+// =====================================================
+// ScrapLens — Scraps Service
+//
+// Real, authenticated accounts are backed by Supabase ONLY — never by the
+// shared browser localStorage bucket, and never by DEMO_SCRAPS as a
+// fallback. A brand-new real user legitimately has zero rows; that must
+// render as an empty inventory, not as someone else's (or the demo's)
+// data. Only a session with no authenticated user (the "Explorar versión
+// demo" flow, or no backend configured at all) uses localStorage.
+// =====================================================
+
 const STORAGE_KEY = 'scraplens_user_scraps_v1';
 
-/**
- * Get all scraps with unified Supabase + Local persistence
- */
-export async function getScraps() {
-  // 1. Try fetching from Supabase if user is logged in
+// createClient() throws SYNCHRONOUSLY (not a rejected promise) when
+// Supabase isn't configured — with no backend, there's nothing to check
+// a session against, so treat that exactly like "no user".
+function getSupabaseClientSafe() {
   try {
-    const supabase = createClient();
+    return createClient();
+  } catch (err) {
+    console.warn('[scraps] Supabase client unavailable (not configured):', err);
+    return null;
+  }
+}
+
+async function getCurrentUser() {
+  const supabase = getSupabaseClientSafe();
+  if (!supabase) return { supabase: null, user: null };
+  try {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    return { supabase, user };
+  } catch (err) {
+    console.warn('[scraps] Supabase auth check failed:', err);
+    return { supabase, user: null };
+  }
+}
 
-    if (user) {
+export async function getScraps() {
+  const { supabase, user } = await getCurrentUser();
+
+  if (user) {
+    try {
       const { data, error } = await supabase
         .from('scraps')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        return data;
-      }
+      if (error) throw error;
+      return data ?? [];
+    } catch (err) {
+      console.error('[scraps] Supabase fetch failed for authenticated user:', err);
+      // Fail closed: never show demo/local data to a real account just
+      // because a request hiccuped.
+      return [];
     }
-  } catch (err) {
-    console.warn('[scraps] Supabase fetch fallback to local:', err);
   }
 
-  // 2. Client-side LocalStorage fallback / Demo mode
+  // Demo / unauthenticated: localStorage-backed seed data only.
   if (typeof window !== 'undefined') {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
+        if (Array.isArray(parsed)) return parsed;
       }
-      // Initialize with default demo scraps if empty
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DEMO_SCRAPS));
       return DEMO_SCRAPS;
     } catch {
@@ -53,12 +83,41 @@ export async function getScraps() {
  * Save a new scrap item (from Manual Entry or Camera Scanner)
  */
 export async function createScrap(item) {
-  const timestamp = new Date().toISOString();
-  const id = `scrap-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`;
+  const { supabase, user } = await getCurrentUser();
 
+  if (user) {
+    const { data, error } = await supabase
+      .from('scraps')
+      .insert({
+        user_id: user.id,
+        material_name: item.material_name,
+        category: item.category,
+        subtype: item.subtype || null,
+        image_url: item.image_url || null,
+        weight_kg: Number(item.weight_kg) || 0,
+        price_per_kg: Number(item.price_per_kg) || 0,
+        total_value: Number(item.total_value) || 0,
+        currency: 'EUR',
+        ai_confidence: item.ai_confidence ?? null,
+        condition_notes: item.condition_notes || null,
+        status: item.status || 'available',
+        is_demo: false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[scraps] Supabase insert error:', error);
+      throw error; // let the caller show a real error — don't pretend it saved
+    }
+    return data;
+  }
+
+  // Demo / unauthenticated: localStorage only.
+  const timestamp = new Date().toISOString();
   const newScrap = {
-    id,
-    user_id: item.user_id || 'local-user',
+    id: `scrap-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`,
+    user_id: 'local-user',
     material_id: item.material_id || null,
     material_name: item.material_name,
     category: item.category,
@@ -73,60 +132,19 @@ export async function createScrap(item) {
     condition_notes: item.condition_notes || null,
     reference_object: item.reference_object || null,
     status: item.status || 'available',
-    is_demo: item.is_demo ?? true,
+    is_demo: true,
     created_at: timestamp,
     updated_at: timestamp,
   };
 
-  // 1. Save to LocalStorage immediately for instant UI availability
   if (typeof window !== 'undefined') {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       const existing = stored ? JSON.parse(stored) : [...DEMO_SCRAPS];
-      const updated = [newScrap, ...existing];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([newScrap, ...existing]));
     } catch (e) {
       console.warn('[scraps] LocalStorage save error:', e);
     }
-  }
-
-  // 2. If authenticated in Supabase, persist to database
-  try {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      newScrap.user_id = user.id;
-      newScrap.is_demo = false;
-
-      const { data, error } = await supabase
-        .from('scraps')
-        .insert({
-          user_id: user.id,
-          material_name: newScrap.material_name,
-          category: newScrap.category,
-          subtype: newScrap.subtype,
-          image_url: newScrap.image_url,
-          weight_kg: newScrap.weight_kg,
-          price_per_kg: newScrap.price_per_kg,
-          total_value: newScrap.total_value,
-          currency: 'EUR',
-          ai_confidence: newScrap.ai_confidence,
-          condition_notes: newScrap.condition_notes,
-          status: newScrap.status,
-          is_demo: false,
-        })
-        .select()
-        .single();
-
-      if (!error && data) {
-        return data;
-      }
-    }
-  } catch (err) {
-    console.warn('[scraps] Supabase insert error:', err);
   }
 
   return newScrap;
@@ -136,30 +154,27 @@ export async function createScrap(item) {
  * Delete a scrap item
  */
 export async function removeScrap(id) {
+  const { supabase, user } = await getCurrentUser();
+
+  if (user) {
+    const { error } = await supabase.from('scraps').delete().eq('id', id).eq('user_id', user.id);
+    if (error) {
+      console.error('[scraps] Supabase delete error:', error);
+      throw error;
+    }
+    return;
+  }
+
   if (typeof window !== 'undefined') {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const existing = JSON.parse(stored);
-        const updated = existing.filter((s) => s.id !== id);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(existing.filter((s) => s.id !== id)));
       }
     } catch (e) {
       console.warn('[scraps] LocalStorage delete error:', e);
     }
-  }
-
-  try {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      await supabase.from('scraps').delete().eq('id', id);
-    }
-  } catch (err) {
-    console.warn('[scraps] Supabase delete error:', err);
   }
 }
 
@@ -167,7 +182,21 @@ export async function removeScrap(id) {
  * Update an existing scrap item
  */
 export async function updateScrapItem(id, updates) {
+  const { supabase, user } = await getCurrentUser();
   const timestamp = new Date().toISOString();
+
+  if (user) {
+    const { error } = await supabase
+      .from('scraps')
+      .update({ ...updates, updated_at: timestamp })
+      .eq('id', id)
+      .eq('user_id', user.id);
+    if (error) {
+      console.error('[scraps] Supabase update error:', error);
+      throw error;
+    }
+    return;
+  }
 
   if (typeof window !== 'undefined') {
     try {
@@ -182,18 +211,5 @@ export async function updateScrapItem(id, updates) {
     } catch (e) {
       console.warn('[scraps] LocalStorage update error:', e);
     }
-  }
-
-  try {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      await supabase.from('scraps').update({ ...updates, updated_at: timestamp }).eq('id', id);
-    }
-  } catch (err) {
-    console.warn('[scraps] Supabase update error:', err);
   }
 }
