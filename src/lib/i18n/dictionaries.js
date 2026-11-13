@@ -275,6 +275,12 @@ const es = {
     verifyWarningBody: 'La IA tiene baja confianza en esta estimación: puede ser un objeto completo (no material suelto) o la imagen no da suficientes pistas de escala. Pésalo manualmente o corrige los valores abajo.',
     completeEquipmentBadge: 'Objeto completo, no scrap suelto',
   },
+  install: {
+    bannerTitle: 'Instala ScrapLens',
+    bannerBody: 'Añádela a tu pantalla de inicio: acceso directo, pantalla completa y funciona sin conexión.',
+    installButton: 'Instalar',
+    iosInstructions: 'Toca Compartir y luego "Añadir a pantalla de inicio"',
+  },
   cookies: {
     title: 'Tu privacidad importa',
     description:
@@ -573,6 +579,12 @@ const en = {
     verifyWarningTitle: 'Please verify this result before saving',
     verifyWarningBody: 'The AI has low confidence in this estimate: it may be a complete object (not loose material) or the image didn’t give enough scale clues. Weigh it manually or correct the values below.',
     completeEquipmentBadge: 'Complete object, not loose scrap',
+  },
+  install: {
+    bannerTitle: 'Install ScrapLens',
+    bannerBody: 'Add it to your home screen: quick access, full screen, and it works offline.',
+    installButton: 'Install',
+    iosInstructions: 'Tap Share, then "Add to Home Screen"',
   },
   cookies: {
     title: 'Your privacy matters',

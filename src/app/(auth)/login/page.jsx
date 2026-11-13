@@ -56,7 +56,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main id="main-content" className="min-h-screen bg-canvas flex items-center justify-center p-4">
+    <main id="main-content" className="relative min-h-screen bg-canvas flex items-center justify-center p-4">
       <div className="absolute top-4 right-4 flex items-center gap-2">
         <LanguageSwitcher />
         <ThemeToggle />
