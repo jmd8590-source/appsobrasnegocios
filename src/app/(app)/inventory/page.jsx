@@ -11,9 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
-import { DEMO_SCRAPS } from '@/lib/demo/data';
 import { getScraps, removeScrap, updateScrapItem } from '@/lib/scraps/service';
 import { formatCurrency, formatWeight, formatRelativeTime } from '@/lib/utils';
 
@@ -22,7 +22,7 @@ const CATEGORY_OPTIONS = ['metal', 'wood', 'plastic', 'construction'];
 
 export default function InventoryPage() {
   const { t } = useLanguage();
-  const [scraps, setScraps] = useState(DEMO_SCRAPS);
+  const [scraps, setScraps] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -160,8 +160,23 @@ export default function InventoryPage() {
         </div>
       </div>
 
+      {/* Loading skeletons */}
+      {isLoading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <Card key={idx}>
+              <CardContent className="p-4 space-y-3">
+                <Skeleton className="w-full h-32 rounded-xl" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-12 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
       {/* Empty state */}
-      {filtered.length === 0 && (
+      {!isLoading && filtered.length === 0 && (
         <EmptyState
           icon={Package}
           title={t('inventory.emptyTitle')}
@@ -179,8 +194,9 @@ export default function InventoryPage() {
       )}
 
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filtered.map((scrap) => (
+      {!isLoading && filtered.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filtered.map((scrap) => (
           <Card key={scrap.id} className="card-hover group">
             <CardContent className="p-4">
               {/* Image placeholder */}
@@ -242,8 +258,9 @@ export default function InventoryPage() {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Edit Dialog */}
       {editingScrap && (

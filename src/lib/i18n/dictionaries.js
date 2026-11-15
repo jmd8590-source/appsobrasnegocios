@@ -169,6 +169,11 @@ const es = {
     copyErrorTitle: 'No se pudo copiar',
     pdfGeneratedTitle: 'PDF generado',
     pdfGeneratedDesc: 'Ficha de "{{title}}" descargada',
+    deleteTitle: 'Eliminar lote',
+    deleteConfirm: '¿Eliminar "{{title}}"? Esta acción no se puede deshacer. Los sobrantes asociados volverán a estar disponibles.',
+    deletedToastTitle: 'Lote eliminado',
+    deletedToastDesc: '"{{title}}" eliminado correctamente',
+    deleteErrorTitle: 'No se pudo eliminar el lote',
   },
   manualEntry: {
     title: 'Entrar a mano',
@@ -499,6 +504,11 @@ const en = {
     copyErrorTitle: 'Could not copy',
     pdfGeneratedTitle: 'PDF generated',
     pdfGeneratedDesc: '"{{title}}" sheet downloaded',
+    deleteTitle: 'Delete lot',
+    deleteConfirm: 'Delete "{{title}}"? This action cannot be undone. Associated scraps will become available again.',
+    deletedToastTitle: 'Lot deleted',
+    deletedToastDesc: '"{{title}}" removed successfully',
+    deleteErrorTitle: 'Could not delete the lot',
   },
   manualEntry: {
     title: 'Manual entry',

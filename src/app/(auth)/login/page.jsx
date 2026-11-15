@@ -11,6 +11,7 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 import { createClient } from '@/lib/supabase/client';
 import { isDemoMode } from '@/lib/utils';
+import { clearDemoSessionCookie, clearLocalPortalStorage } from '@/lib/storage/local-store';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 
 export default function LoginPage() {
@@ -38,6 +39,8 @@ export default function LoginPage() {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      clearDemoSessionCookie();
+      clearLocalPortalStorage();
       router.push('/dashboard');
       router.refresh();
     } catch (err) {
@@ -49,6 +52,7 @@ export default function LoginPage() {
 
   const handleDemoAccess = async () => {
     setIsLoading(true);
+    clearLocalPortalStorage();
     document.cookie = 'scraplens_demo_session=true; path=/; max-age=86400';
     await new Promise((r) => setTimeout(r, 400));
     router.push('/dashboard');

@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import { isDemoMode } from '@/lib/utils';
+import { clearDemoSessionCookie, clearLocalPortalStorage } from '@/lib/storage/local-store';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
@@ -26,7 +27,8 @@ export function AppNav() {
   ];
 
   async function handleLogout() {
-    document.cookie = 'scraplens_demo_session=; path=/; max-age=0';
+    clearDemoSessionCookie();
+    clearLocalPortalStorage();
     if (!isDemoMode()) {
       const supabase = createClient();
       await supabase.auth.signOut();

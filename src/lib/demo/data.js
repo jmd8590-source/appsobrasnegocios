@@ -1,18 +1,9 @@
 // =====================================================
-// ScrapLens — Realistic Demo Data
-// Allows full app testing without Gemini or Supabase
+// ScrapLens — Demo Catalog & Scanner Fallback Data
+// User portals (scraps and lots) always start completely empty ([]).
 // =====================================================
 
 export const DEMO_USER_ID = 'demo-user-00000000-0000-0000-0000-000000000000';
-
-// Fixed anchor instead of Date.now(): this module is evaluated once on the
-// server (during SSR) and again in the browser (on hydration), at two
-// genuinely different wall-clock moments. Using Date.now() here made every
-// "created_at" a different value each time, which made the rendered
-// relative-time text ("hace Xh") differ between server and client and
-// broke hydration (React discarded and fully re-rendered the tree).
-// A fixed anchor keeps every evaluation byte-identical.
-const DEMO_ANCHOR = new Date('2026-11-12T12:00:00.000Z').getTime();
 
 export const DEMO_MATERIALS = [
   {
@@ -59,223 +50,21 @@ export const DEMO_MATERIALS = [
   },
 ];
 
-export const DEMO_SCRAPS = [
-  {
-    id: 'scrap-001',
-    user_id: DEMO_USER_ID,
-    material_id: 'mat-cobre-limpio',
-    material_name: 'Cobre limpio',
-    category: 'metal',
-    subtype: 'cobre',
-    image_url: null,
-    image_path: null,
-    weight_kg: 8.5,
-    price_per_kg: 6.80,
-    total_value: 57.80,
-    currency: 'EUR',
-    ai_confidence: 0.94,
-    condition_notes: 'Cables pelados en buen estado, sin oxidación visible. Proceden de instalación eléctrica renovada.',
-    reference_object: 'hand',
-    status: 'available',
-    is_demo: true,
-    created_at: new Date(DEMO_ANCHOR - 2 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(DEMO_ANCHOR - 2 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'scrap-002',
-    user_id: DEMO_USER_ID,
-    material_id: 'mat-aluminio',
-    material_name: 'Aluminio perfiles',
-    category: 'metal',
-    subtype: 'aluminio',
-    image_url: null,
-    image_path: null,
-    weight_kg: 24.2,
-    price_per_kg: 1.40,
-    total_value: 33.88,
-    currency: 'EUR',
-    ai_confidence: 0.89,
-    condition_notes: 'Perfiles de ventana de aluminio anodizado. Sin roturas significativas. Longitudes variables 1-3m.',
-    reference_object: 'tape',
-    status: 'available',
-    is_demo: true,
-    created_at: new Date(DEMO_ANCHOR - 5 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(DEMO_ANCHOR - 5 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'scrap-003',
-    user_id: DEMO_USER_ID,
-    material_id: 'mat-acero',
-    material_name: 'Acero estructural',
-    category: 'metal',
-    subtype: 'acero',
-    image_url: null,
-    image_path: null,
-    weight_kg: 145.0,
-    price_per_kg: 0.22,
-    total_value: 31.90,
-    currency: 'EUR',
-    ai_confidence: 0.91,
-    condition_notes: 'Vigas IPN-160 procedentes de derribo. Ligera oxidación superficial. Longitud ~4m aprox.',
-    reference_object: 'tape',
-    status: 'in_lot',
-    is_demo: true,
-    created_at: new Date(DEMO_ANCHOR - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(DEMO_ANCHOR - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'scrap-004',
-    user_id: DEMO_USER_ID,
-    material_id: null,
-    material_name: 'Latón',
-    category: 'metal',
-    subtype: 'latón',
-    image_url: null,
-    image_path: null,
-    weight_kg: 3.2,
-    price_per_kg: 3.60,
-    total_value: 11.52,
-    currency: 'EUR',
-    ai_confidence: 0.87,
-    condition_notes: 'Grifería y accesorios de latón variados. Mix de diferentes calidades.',
-    reference_object: 'coin',
-    status: 'available',
-    is_demo: true,
-    created_at: new Date(DEMO_ANCHOR - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(DEMO_ANCHOR - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'scrap-005',
-    user_id: DEMO_USER_ID,
-    material_id: null,
-    material_name: 'Cable eléctrico Cu ≥40%',
-    category: 'metal',
-    subtype: 'cables',
-    image_url: null,
-    image_path: null,
-    weight_kg: 12.8,
-    price_per_kg: 2.80,
-    total_value: 35.84,
-    currency: 'EUR',
-    ai_confidence: 0.82,
-    condition_notes: 'Cables trifásicos 4x16mm². Proceden de cuadro eléctrico. Bien conservados.',
-    reference_object: 'hand',
-    status: 'available',
-    is_demo: true,
-    created_at: new Date(DEMO_ANCHOR - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(DEMO_ANCHOR - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'scrap-006',
-    user_id: DEMO_USER_ID,
-    material_id: null,
-    material_name: 'Tablero contrachapado',
-    category: 'wood',
-    subtype: 'tablero',
-    image_url: null,
-    image_path: null,
-    weight_kg: 38.5,
-    price_per_kg: 0.07,
-    total_value: 2.70,
-    currency: 'EUR',
-    ai_confidence: 0.78,
-    condition_notes: 'Paneles de contrachapado 15mm, algunas piezas con clavos. Apto para reciclaje.',
-    reference_object: 'tape',
-    status: 'available',
-    is_demo: true,
-    created_at: new Date(DEMO_ANCHOR - 4 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(DEMO_ANCHOR - 4 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'scrap-007',
-    user_id: DEMO_USER_ID,
-    material_id: null,
-    material_name: 'Acero inoxidable 304',
-    category: 'metal',
-    subtype: 'inox',
-    image_url: null,
-    image_path: null,
-    weight_kg: 6.8,
-    price_per_kg: 1.20,
-    total_value: 8.16,
-    currency: 'EUR',
-    ai_confidence: 0.93,
-    condition_notes: 'Recortes de chapa inox AISI 304. Procedentes de industria alimentaria. Sin contaminantes.',
-    reference_object: 'coin',
-    status: 'sold',
-    is_demo: true,
-    created_at: new Date(DEMO_ANCHOR - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(DEMO_ANCHOR - 6 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'scrap-008',
-    user_id: DEMO_USER_ID,
-    material_id: null,
-    material_name: 'PET botellas',
-    category: 'plastic',
-    subtype: 'pet',
-    image_url: null,
-    image_path: null,
-    weight_kg: 22.4,
-    price_per_kg: 0.28,
-    total_value: 6.27,
-    currency: 'EUR',
-    ai_confidence: 0.96,
-    condition_notes: 'Botellas PET transparentes prensadas. Sin tapones. Limpias y clasificadas.',
-    reference_object: 'hand',
-    status: 'available',
-    is_demo: true,
-    created_at: new Date(DEMO_ANCHOR - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(DEMO_ANCHOR - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
+// Kept empty so no portal ever renders pre-seeded fictitious scraps or lots.
+export const DEMO_SCRAPS = [];
 
-export const DEMO_LISTINGS = [
-  {
-    id: 'lot-001',
-    user_id: DEMO_USER_ID,
-    title: 'Lote metales ferrosos — Obra C/ Mayor nº12',
-    description: `**Lote de metales ferrosos procedentes de derribo y rehabilitación.**
-
-Incluye vigas IPN-160 de acero estructural (~145kg) y perfiles de aluminio anodizado de ventanas y puertas (~24kg).
-
-**Características del lote:**
-- Material en buen estado general, ligera oxidación superficial normal
-- Disponible para recogida en almacén propio
-- Documentación de origen disponible
-- Posibilidad de entrega en chatarrería concertada
-
-Precio orientativo de mercado calculado por ScrapLens. Negociable según volumen.`,
-    total_value: 65.78,
-    total_weight_kg: 169.2,
-    status: 'active',
-    share_token: 'demo-share-token-abc123',
-    is_demo: true,
-    created_at: new Date(DEMO_ANCHOR - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(DEMO_ANCHOR - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    scraps: [DEMO_SCRAPS[1], DEMO_SCRAPS[2]],
-  },
-];
+export const DEMO_LISTINGS = [];
 
 export const DEMO_STATS = {
-  total_value: DEMO_SCRAPS.reduce((acc, s) => acc + s.total_value, 0),
-  total_scraps: DEMO_SCRAPS.length,
-  total_weight_kg: DEMO_SCRAPS.reduce((acc, s) => acc + s.weight_kg, 0),
-  total_lots: DEMO_LISTINGS.length,
-  scraps_this_week: 5,
-  value_this_week: DEMO_SCRAPS.slice(0, 5).reduce((acc, s) => acc + s.total_value, 0),
+  total_value: 0,
+  total_scraps: 0,
+  total_weight_kg: 0,
+  total_lots: 0,
+  scraps_this_week: 0,
+  value_this_week: 0,
 };
 
-// Chart data for dashboard (last 7 days)
-export const DEMO_CHART_DATA = [
-  { date: '12 Ago', value: 12.50, scraps: 1 },
-  { date: '13 Ago', value: 0, scraps: 0 },
-  { date: '14 Ago', value: 45.40, scraps: 2 },
-  { date: '15 Ago', value: 8.16, scraps: 1 },
-  { date: '16 Ago', value: 42.11, scraps: 2 },
-  { date: '17 Ago', value: 33.88, scraps: 1 },
-  { date: '18 Ago', value: 57.80, scraps: 1 },
-];
+export const DEMO_CHART_DATA = [];
 
 // Demo AI analysis responses for scanner testing. Each one also carries the
 // newer object_type/estimated_dimensions_cm/weight_reasoning fields so the

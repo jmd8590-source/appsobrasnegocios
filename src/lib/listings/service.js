@@ -1,44 +1,23 @@
-import { createClient } from '@/lib/supabase/client';
-import { DEMO_LISTINGS } from '@/lib/demo/data';
+import { getCurrentUser } from '@/lib/supabase/client-auth';
+import {
+  LOCAL_LISTINGS_KEY,
+  LOCAL_SCRAPS_KEY,
+  readLocalCollection,
+  writeLocalCollection,
+  generateEntityId,
+} from '@/lib/storage/local-store';
 
 // =====================================================
 // ScrapLens — Listings (Lotes) Service
 //
-// Same rule as scraps/service.js: a real, authenticated account is backed
-// by Supabase ONLY. An empty result means that account genuinely has no
-// lots yet — it must never fall back to the shared localStorage bucket or
-// DEMO_LISTINGS. Only a session with no authenticated user (demo / no
-// backend configured) uses localStorage.
+// Authenticated accounts are backed exclusively by Supabase filtered by
+// `user_id` (excluding any `is_demo` records). Demo/unauthenticated sessions
+// start with an empty portal (`[]`) and store only user-created lots locally.
 // =====================================================
 
-const STORAGE_KEY = 'scraplens_user_listings_v1';
-
-// createClient() throws SYNCHRONOUSLY (not a rejected promise) when
-// Supabase isn't configured — with no backend, there's nothing to check
-// a session against, so treat that exactly like "no user".
-function getSupabaseClientSafe() {
-  try {
-    return createClient();
-  } catch (err) {
-    console.warn('[listings] Supabase client unavailable (not configured):', err);
-    return null;
-  }
-}
-
-async function getCurrentUser() {
-  const supabase = getSupabaseClientSafe();
-  if (!supabase) return { supabase: null, user: null };
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    return { supabase, user };
-  } catch (err) {
-    console.warn('[listings] Supabase auth check failed:', err);
-    return { supabase, user: null };
-  }
-}
-
+/**
+ * Fetches lots belonging exclusively to the current portal session.
+ */
 export async function getListings() {
   const { supabase, user } = await getCurrentUser();
 
@@ -51,10 +30,14 @@ export async function getListings() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data ?? []).map((listing) => ({
-        ...listing,
-        scraps: (listing.listing_scraps ?? []).map((ls) => ls.scraps).filter(Boolean),
-      }));
+      return (data ?? [])
+        .filter((listing) => listing.is_demo !== true)
+        .map((listing) => ({
+          ...listing,
+          scraps: (listing.listing_scraps ?? [])
+            .map((ls) => ls.scraps)
+            .filter((scrap) => scrap && scrap.is_demo !== true),
+        }));
     } catch (err) {
       console.error('[listings] Supabase fetch failed for authenticated user:', err);
       // Fail closed: never show demo/local data to a real account.
@@ -62,25 +45,16 @@ export async function getListings() {
     }
   }
 
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) return parsed;
-      }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEMO_LISTINGS));
-      return DEMO_LISTINGS;
-    } catch {
-      return DEMO_LISTINGS;
-    }
-  }
-
-  return DEMO_LISTINGS;
+  return readLocalCollection(LOCAL_LISTINGS_KEY);
 }
 
+/**
+ * Creates a new lot, links its selected scraps, and marks them as `in_lot`.
+ */
 export async function createListing(listing) {
   const { supabase, user } = await getCurrentUser();
+  const scrapIds = (listing.scraps ?? []).map((s) => s.id).filter(Boolean);
+  const timestamp = new Date().toISOString();
 
   if (user) {
     const { data, error } = await supabase
@@ -102,73 +76,136 @@ export async function createListing(listing) {
       throw error;
     }
 
-    const scrapIds = (listing.scraps ?? []).map((s) => s.id).filter(Boolean);
     if (scrapIds.length > 0) {
       const { error: linkError } = await supabase
         .from('listing_scraps')
         .insert(scrapIds.map((scrap_id) => ({ listing_id: data.id, scrap_id })));
-      if (linkError) console.error('[listings] Supabase listing_scraps link error:', linkError);
+      if (linkError) {
+        console.error('[listings] Supabase listing_scraps link error:', linkError);
+      } else {
+        const { error: statusError } = await supabase
+          .from('scraps')
+          .update({ status: 'in_lot', updated_at: timestamp })
+          .in('id', scrapIds)
+          .eq('user_id', user.id);
+        if (statusError) {
+          console.error('[listings] Supabase scrap status update error:', statusError);
+        }
+      }
     }
 
     return { ...data, scraps: listing.scraps ?? [] };
   }
 
-  // Demo / unauthenticated: localStorage only.
-  const timestamp = new Date().toISOString();
-  const randomSuffix = Math.random().toString(36).substring(2, 9);
   const newListing = {
-    id: `lot-${randomSuffix}-${Date.now()}`,
+    id: generateEntityId('lot'),
     user_id: 'local-user',
     title: listing.title,
     description: listing.description ?? '',
     total_value: listing.total_value ?? 0,
     total_weight_kg: listing.total_weight_kg ?? 0,
     status: listing.status ?? 'draft',
-    share_token: `share-${randomSuffix}`,
-    is_demo: true,
+    share_token: `share-${generateEntityId('tok')}`,
+    is_demo: false,
     created_at: timestamp,
     updated_at: timestamp,
     scraps: listing.scraps ?? [],
   };
 
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const existing = stored ? JSON.parse(stored) : [...DEMO_LISTINGS];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([newListing, ...existing]));
-    } catch (e) {
-      console.warn('[listings] LocalStorage save error:', e);
-    }
+  const existingListings = readLocalCollection(LOCAL_LISTINGS_KEY);
+  writeLocalCollection(LOCAL_LISTINGS_KEY, [newListing, ...existingListings]);
+
+  if (scrapIds.length > 0) {
+    const scrapIdSet = new Set(scrapIds);
+    const existingScraps = readLocalCollection(LOCAL_SCRAPS_KEY);
+    writeLocalCollection(
+      LOCAL_SCRAPS_KEY,
+      existingScraps.map((s) =>
+        scrapIdSet.has(s.id) ? { ...s, status: 'in_lot', updated_at: timestamp } : s
+      )
+    );
   }
 
   return newListing;
 }
 
-export async function removeListing(id) {
+/**
+ * Deletes a lot and returns any unlinked `in_lot` scraps back to `available`.
+ */
+export async function removeListing(listingOrId) {
+  const id = typeof listingOrId === 'string' ? listingOrId : listingOrId?.id;
+  if (!id) throw new Error('Listing id is required');
+
   const { supabase, user } = await getCurrentUser();
+  const timestamp = new Date().toISOString();
 
   if (user) {
-    const { error } = await supabase.from('listings').delete().eq('id', id).eq('user_id', user.id);
+    const { data: linkedRows } = await supabase
+      .from('listing_scraps')
+      .select('scrap_id')
+      .eq('listing_id', id);
+    const candidateScrapIds = (linkedRows ?? []).map((row) => row.scrap_id).filter(Boolean);
+
+    const { error } = await supabase
+      .from('listings')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
     if (error) {
       console.error('[listings] Supabase delete error:', error);
       throw error;
     }
+
+    if (candidateScrapIds.length > 0) {
+      const { data: stillLinked } = await supabase
+        .from('listing_scraps')
+        .select('scrap_id')
+        .in('scrap_id', candidateScrapIds);
+      const stillLinkedSet = new Set((stillLinked ?? []).map((row) => row.scrap_id));
+      const freedIds = candidateScrapIds.filter((scrapId) => !stillLinkedSet.has(scrapId));
+
+      if (freedIds.length > 0) {
+        await supabase
+          .from('scraps')
+          .update({ status: 'available', updated_at: timestamp })
+          .in('id', freedIds)
+          .eq('user_id', user.id)
+          .eq('status', 'in_lot');
+      }
+    }
+
     return;
   }
 
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const existing = JSON.parse(stored);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(existing.filter((l) => l.id !== id)));
-      }
-    } catch (e) {
-      console.warn('[listings] LocalStorage delete error:', e);
+  const existingListings = readLocalCollection(LOCAL_LISTINGS_KEY);
+  const target = existingListings.find((l) => l.id === id);
+  const remainingListings = existingListings.filter((l) => l.id !== id);
+  writeLocalCollection(LOCAL_LISTINGS_KEY, remainingListings);
+
+  const candidateIds = (target?.scraps ?? []).map((s) => s.id).filter(Boolean);
+  if (candidateIds.length > 0) {
+    const stillLinkedSet = new Set(
+      remainingListings.flatMap((l) => (l.scraps ?? []).map((s) => s.id).filter(Boolean))
+    );
+    const freedSet = new Set(candidateIds.filter((scrapId) => !stillLinkedSet.has(scrapId)));
+
+    if (freedSet.size > 0) {
+      const existingScraps = readLocalCollection(LOCAL_SCRAPS_KEY);
+      writeLocalCollection(
+        LOCAL_SCRAPS_KEY,
+        existingScraps.map((s) =>
+          freedSet.has(s.id) && s.status === 'in_lot'
+            ? { ...s, status: 'available', updated_at: timestamp }
+            : s
+        )
+      );
     }
   }
 }
 
+/**
+ * Updates the status of an existing lot.
+ */
 export async function updateListingStatus(id, status) {
   const { supabase, user } = await getCurrentUser();
   const timestamp = new Date().toISOString();
@@ -186,16 +223,9 @@ export async function updateListingStatus(id, status) {
     return;
   }
 
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const existing = JSON.parse(stored);
-        const updated = existing.map((l) => (l.id === id ? { ...l, status, updated_at: timestamp } : l));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      }
-    } catch (e) {
-      console.warn('[listings] LocalStorage update error:', e);
-    }
-  }
+  const existing = readLocalCollection(LOCAL_LISTINGS_KEY);
+  const updated = existing.map((l) =>
+    l.id === id ? { ...l, status, updated_at: timestamp } : l
+  );
+  writeLocalCollection(LOCAL_LISTINGS_KEY, updated);
 }

@@ -6,9 +6,9 @@ import { Camera, PenSquare, TrendingUp, Package, Layers, Weight, ArrowRight, Clo
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import { useTheme } from '@/lib/theme/ThemeProvider';
-import { DEMO_SCRAPS, DEMO_LISTINGS } from '@/lib/demo/data';
 import { getScraps } from '@/lib/scraps/service';
 import { getListings } from '@/lib/listings/service';
 import {
@@ -46,14 +46,19 @@ export default function DashboardPage() {
   // differs enough between themes to matter; the tick color (--ink-faint)
   // happens to be identical in both palettes.
   const gridColor = theme === 'light' ? '#e3e3e0' : '#26282e';
-  const [scraps, setScraps] = useState(DEMO_SCRAPS);
-  const [listings, setListings] = useState(DEMO_LISTINGS);
+  const [scraps, setScraps] = useState([]);
+  const [listings, setListings] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
-      const [scrapsData, listingsData] = await Promise.all([getScraps(), getListings()]);
-      setScraps(scrapsData);
-      setListings(listingsData);
+      try {
+        const [scrapsData, listingsData] = await Promise.all([getScraps(), getListings()]);
+        setScraps(scrapsData);
+        setListings(listingsData);
+      } finally {
+        setIsLoading(false);
+      }
     }
     loadData();
   }, []);
@@ -139,7 +144,11 @@ export default function DashboardPage() {
                   <kpi.icon className={`w-4.5 h-4.5 ${kpi.color}`} aria-hidden="true" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-ink mb-0.5">{kpi.value}</p>
+              {isLoading ? (
+                <Skeleton className="h-7 w-24 mb-1.5" />
+              ) : (
+                <p className="text-2xl font-bold text-ink mb-0.5">{kpi.value}</p>
+              )}
               <p className="text-xs text-ink-muted">{kpi.label}</p>
               <p className="text-xs text-ink-faint mt-1">{kpi.subtitle}</p>
             </CardContent>
@@ -191,27 +200,51 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentScraps.map((scrap) => (
-              <div key={scrap.id} className="flex items-start gap-3 p-3 rounded-xl bg-surface-2/60 hover:bg-surface-2 transition-colors">
-                <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center shrink-0">
-                  <Package className="w-4 h-4 text-ink-muted" aria-hidden="true" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-ink truncate">{scrap.material_name}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-ink-faint">{formatWeight(scrap.weight_kg)}</span>
-                    <span className="text-xs text-ink-faint">·</span>
-                    <span className="text-xs text-positive font-medium">{formatCurrency(scrap.total_value)}</span>
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-surface-2/60">
+                  <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <Badge variant={scrap.status} className="text-[10px]">
-                    {t(`statusLabel.${scrap.status}`)}
-                  </Badge>
-                  <span className="text-[10px] text-ink-faint">{formatRelativeTime(scrap.created_at)}</span>
-                </div>
+              ))
+            ) : recentScraps.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 px-3 text-center">
+                <Package className="w-8 h-8 text-ink-faint mb-2" aria-hidden="true" />
+                <p className="text-sm font-medium text-ink-muted mb-1">{t('inventory.emptyTitle')}</p>
+                <p className="text-xs text-ink-faint mb-4">{t('inventory.emptyDescEmpty')}</p>
+                <Link href="/scanner">
+                  <Button variant="amber" size="sm" className="gap-1.5">
+                    <Camera className="w-3.5 h-3.5" aria-hidden="true" />
+                    {t('dashboard.scan')}
+                  </Button>
+                </Link>
               </div>
-            ))}
+            ) : (
+              recentScraps.map((scrap) => (
+                <div key={scrap.id} className="flex items-start gap-3 p-3 rounded-xl bg-surface-2/60 hover:bg-surface-2 transition-colors">
+                  <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center shrink-0">
+                    <Package className="w-4 h-4 text-ink-muted" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-ink truncate">{scrap.material_name}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-ink-faint">{formatWeight(scrap.weight_kg)}</span>
+                      <span className="text-xs text-ink-faint">·</span>
+                      <span className="text-xs text-positive font-medium">{formatCurrency(scrap.total_value)}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge variant={scrap.status} className="text-[10px]">
+                      {t(`statusLabel.${scrap.status}`)}
+                    </Badge>
+                    <span className="text-[10px] text-ink-faint">{formatRelativeTime(scrap.created_at)}</span>
+                  </div>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>

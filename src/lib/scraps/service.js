@@ -1,45 +1,23 @@
-import { createClient } from '@/lib/supabase/client';
-import { DEMO_SCRAPS } from '@/lib/demo/data';
+import { getCurrentUser } from '@/lib/supabase/client-auth';
+import {
+  LOCAL_SCRAPS_KEY,
+  readLocalCollection,
+  writeLocalCollection,
+  generateEntityId,
+} from '@/lib/storage/local-store';
 
 // =====================================================
 // ScrapLens — Scraps Service
 //
-// Real, authenticated accounts are backed by Supabase ONLY — never by the
-// shared browser localStorage bucket, and never by DEMO_SCRAPS as a
-// fallback. A brand-new real user legitimately has zero rows; that must
-// render as an empty inventory, not as someone else's (or the demo's)
-// data. Only a session with no authenticated user (the "Explorar versión
-// demo" flow, or no backend configured at all) uses localStorage.
+// Real, authenticated accounts are backed by Supabase ONLY — filtered strictly
+// by `user_id` and excluding any `is_demo` records. Demo/unauthenticated
+// sessions start clean (`[]`) and persist only user-created items in browser
+// localStorage without pre-seeding any fictitious records.
 // =====================================================
 
-const STORAGE_KEY = 'scraplens_user_scraps_v1';
-
-// createClient() throws SYNCHRONOUSLY (not a rejected promise) when
-// Supabase isn't configured — with no backend, there's nothing to check
-// a session against, so treat that exactly like "no user".
-function getSupabaseClientSafe() {
-  try {
-    return createClient();
-  } catch (err) {
-    console.warn('[scraps] Supabase client unavailable (not configured):', err);
-    return null;
-  }
-}
-
-async function getCurrentUser() {
-  const supabase = getSupabaseClientSafe();
-  if (!supabase) return { supabase: null, user: null };
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    return { supabase, user };
-  } catch (err) {
-    console.warn('[scraps] Supabase auth check failed:', err);
-    return { supabase, user: null };
-  }
-}
-
+/**
+ * Fetches scraps belonging exclusively to the current portal session.
+ */
 export async function getScraps() {
   const { supabase, user } = await getCurrentUser();
 
@@ -52,31 +30,15 @@ export async function getScraps() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).filter((row) => row.is_demo !== true);
     } catch (err) {
       console.error('[scraps] Supabase fetch failed for authenticated user:', err);
-      // Fail closed: never show demo/local data to a real account just
-      // because a request hiccuped.
+      // Fail closed: never show demo/local data to a real account.
       return [];
     }
   }
 
-  // Demo / unauthenticated: localStorage-backed seed data only.
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) return parsed;
-      }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEMO_SCRAPS));
-      return DEMO_SCRAPS;
-    } catch {
-      return DEMO_SCRAPS;
-    }
-  }
-
-  return DEMO_SCRAPS;
+  return readLocalCollection(LOCAL_SCRAPS_KEY);
 }
 
 /**
@@ -108,15 +70,14 @@ export async function createScrap(item) {
 
     if (error) {
       console.error('[scraps] Supabase insert error:', error);
-      throw error; // let the caller show a real error — don't pretend it saved
+      throw error;
     }
     return data;
   }
 
-  // Demo / unauthenticated: localStorage only.
   const timestamp = new Date().toISOString();
   const newScrap = {
-    id: `scrap-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`,
+    id: generateEntityId('scrap'),
     user_id: 'local-user',
     material_id: item.material_id || null,
     material_name: item.material_name,
@@ -132,20 +93,13 @@ export async function createScrap(item) {
     condition_notes: item.condition_notes || null,
     reference_object: item.reference_object || null,
     status: item.status || 'available',
-    is_demo: true,
+    is_demo: false,
     created_at: timestamp,
     updated_at: timestamp,
   };
 
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const existing = stored ? JSON.parse(stored) : [...DEMO_SCRAPS];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([newScrap, ...existing]));
-    } catch (e) {
-      console.warn('[scraps] LocalStorage save error:', e);
-    }
-  }
+  const existing = readLocalCollection(LOCAL_SCRAPS_KEY);
+  writeLocalCollection(LOCAL_SCRAPS_KEY, [newScrap, ...existing]);
 
   return newScrap;
 }
@@ -165,17 +119,11 @@ export async function removeScrap(id) {
     return;
   }
 
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const existing = JSON.parse(stored);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(existing.filter((s) => s.id !== id)));
-      }
-    } catch (e) {
-      console.warn('[scraps] LocalStorage delete error:', e);
-    }
-  }
+  const existing = readLocalCollection(LOCAL_SCRAPS_KEY);
+  writeLocalCollection(
+    LOCAL_SCRAPS_KEY,
+    existing.filter((s) => s.id !== id)
+  );
 }
 
 /**
@@ -198,18 +146,9 @@ export async function updateScrapItem(id, updates) {
     return;
   }
 
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const existing = JSON.parse(stored);
-        const updated = existing.map((s) =>
-          s.id === id ? { ...s, ...updates, updated_at: timestamp } : s
-        );
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      }
-    } catch (e) {
-      console.warn('[scraps] LocalStorage update error:', e);
-    }
-  }
+  const existing = readLocalCollection(LOCAL_SCRAPS_KEY);
+  const updated = existing.map((s) =>
+    s.id === id ? { ...s, ...updates, updated_at: timestamp } : s
+  );
+  writeLocalCollection(LOCAL_SCRAPS_KEY, updated);
 }

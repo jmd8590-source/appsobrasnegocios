@@ -6,31 +6,44 @@ import { buildListingGenerationPrompt } from '@/lib/gemini/prompts';
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-const DEMO_LISTINGS = [
-  {
-    title: 'Lote metales no férreos — Cobre y aluminio procedencia obra',
-    description: `**Lote de materiales de recuperación de alta calidad procedentes de reforma industrial.**
+/**
+ * Generates an objective, commercial listing summary built strictly from the
+ * user's selected scraps when Gemini is unavailable.
+ */
+function buildFallbackListing(scraps) {
+  if (!Array.isArray(scraps) || scraps.length === 0) {
+    return {
+      title: 'Lote de materiales recuperados',
+      description:
+        'Lote de materiales clasificados para recuperación y reciclaje. Precio y entrega a convenir según volumen.',
+    };
+  }
 
-Ofrezco este interesante lote compuesto principalmente por **metales no férreos** con excelente ratio de recuperación:
+  const names = [...new Set(scraps.map((s) => s.material_name).filter(Boolean))];
+  const totalWeight = scraps.reduce((acc, s) => acc + (Number(s.weight_kg) || 0), 0);
+  const totalValue = scraps.reduce((acc, s) => acc + (Number(s.total_value) || 0), 0);
+
+  const summaryNames =
+    names.length <= 2
+      ? names.join(' y ')
+      : `${names.slice(0, 2).join(', ')} y ${names.length - 2} más`;
+
+  const lines = scraps.map((s) => {
+    const w = (Number(s.weight_kg) || 0).toFixed(1);
+    const v = (Number(s.total_value) || 0).toFixed(2);
+    return `- ${s.material_name}: ${w} kg (${v} € est.)`;
+  });
+
+  return {
+    title: summaryNames ? `Lote — ${summaryNames}` : 'Lote de materiales recuperados',
+    description: `**Lote de materiales recuperados (${scraps.length} partidas · ${totalWeight.toFixed(1)} kg totales).**
 
 **Contenido del lote:**
-- Cobre limpio (cables y tuberías pelados)
-- Perfiles de aluminio anodizado
-- Accesorios y complementos varios de latón
+${lines.join('\n')}
 
-**Estado y condiciones:**
-- Material en buen estado general, clasificado y preparado para entrega
-- Sin mezclas con material de baja calidad
-- Procedencia documentada (reforma/rehabilitación)
-
-**Ideal para:**
-- Empresas de chatarra y reciclaje de metales
-- Particulares con acceso a centros de recogida
-- Intermediarios del sector de la recuperación
-
-*Precios orientativos calculados según tarifas de mercado vigentes. Precio final a negociar según volumen y forma de pago. Posibilidad de recogida concertada.*`,
-  },
-];
+Valoración orientativa total: ${totalValue.toFixed(2)} €. Disponible para entrega o recogida concertada.`,
+  };
+}
 
 export async function POST(request) {
   try {
@@ -54,15 +67,14 @@ export async function POST(request) {
 
     const { scrapIds: _scrapIds } = parseResult.data;
 
-    // Get scrap details from body if provided (to avoid DB query from API route)
-    const scraps = body.scraps ?? [];
+    // Sanitize scrap details passed in body
+    const scraps = Array.isArray(body.scraps) ? body.scraps : [];
 
-    // Demo mode
+    // Dynamic fallback when Gemini is not configured or no details provided
     if (!isGeminiConfigured() || scraps.length === 0) {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
       return NextResponse.json({
         success: true,
-        data: DEMO_LISTINGS[0],
+        data: buildFallbackListing(scraps),
         isDemo: true,
       });
     }

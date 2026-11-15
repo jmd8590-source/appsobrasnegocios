@@ -11,6 +11,7 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 import { createClient } from '@/lib/supabase/client';
 import { isDemoMode } from '@/lib/utils';
+import { clearDemoSessionCookie, clearLocalPortalStorage } from '@/lib/storage/local-store';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 
 export default function RegisterPage() {
@@ -42,6 +43,8 @@ export default function RegisterPage() {
         },
       });
       if (error) throw error;
+      clearDemoSessionCookie();
+      clearLocalPortalStorage();
       router.push('/dashboard');
       router.refresh();
     } catch (err) {
