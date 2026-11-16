@@ -1,0 +1,38 @@
+name: Supabase Keepalive
+
+# Ejecuta una consulta ligera cada 3 días para evitar que Supabase suspenda el
+# proyecto gratuito tras 7 días de inactividad.
+#
+# Configura en GitHub -> Settings -> Secrets and variables -> Actions
+# (en Secrets o en Variables):
+#   - NEXT_PUBLIC_SUPABASE_URL
+#   - NEXT_PUBLIC_SUPABASE_ANON_KEY (y/o SUPABASE_SERVICE_ROLE_KEY en Secrets)
+# Opcional:
+#   - NEXT_PUBLIC_APP_URL (URL pública desplegada para verificar también /api/keepalive)
+#   - CRON_SECRET (en Secrets, si proteges /api/keepalive con Bearer token)
+on:
+  schedule:
+    - cron: '17 9 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    name: Ping Supabase
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+
+      - name: Run Supabase keepalive
+        run: npm run keepalive
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || secrets.SUPABASE_URL || vars.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || vars.NEXT_PUBLIC_APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
