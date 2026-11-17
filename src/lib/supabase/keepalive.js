@@ -24,17 +24,22 @@ export function getConfiguredValue(rawValue) {
 
 /**
  * Resolves the Supabase REST endpoint and best available API key from env.
+ * When `fallbackUrl` is provided (e.g. from `supabase/config.toml`), allows
+ * an unauthenticated keepalive ping (`mode: 'public'`) if no key secret is set.
  */
-export function resolveSupabaseTarget(env = process.env) {
+export function resolveSupabaseTarget(env = process.env, { fallbackUrl = null } = {}) {
   const supabaseUrl =
     getConfiguredValue(env.SUPABASE_URL) ??
-    getConfiguredValue(env.NEXT_PUBLIC_SUPABASE_URL);
+    getConfiguredValue(env.NEXT_PUBLIC_SUPABASE_URL) ??
+    getConfiguredValue(fallbackUrl);
   if (!supabaseUrl) return null;
+
+  const normalizedUrl = supabaseUrl.replace(/\/+$/, '');
 
   const serviceKey = getConfiguredValue(env.SUPABASE_SERVICE_ROLE_KEY);
   if (serviceKey) {
     return {
-      supabaseUrl: supabaseUrl.replace(/\/+$/, ''),
+      supabaseUrl: normalizedUrl,
       apiKey: serviceKey,
       mode: 'service_role',
     };
@@ -45,9 +50,17 @@ export function resolveSupabaseTarget(env = process.env) {
     getConfiguredValue(env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   if (anonKey) {
     return {
-      supabaseUrl: supabaseUrl.replace(/\/+$/, ''),
+      supabaseUrl: normalizedUrl,
       apiKey: anonKey,
       mode: 'anon',
+    };
+  }
+
+  if (fallbackUrl && normalizedUrl === fallbackUrl.replace(/\/+$/, '')) {
+    return {
+      supabaseUrl: normalizedUrl,
+      apiKey: null,
+      mode: 'public',
     };
   }
 
@@ -56,11 +69,11 @@ export function resolveSupabaseTarget(env = process.env) {
 
 /**
  * Executes a lightweight read-only query against PostgreSQL via Supabase
- * PostgREST plus a non-fatal Auth health check so both services stay active.
+ * PostgREST plus an Auth health check so both services stay active.
  */
 export async function pingSupabase({
   supabaseUrl,
-  apiKey,
+  apiKey = null,
   mode = 'anon',
   fetchImpl = fetch,
   timeoutMs = 10000,
@@ -71,41 +84,54 @@ export async function pingSupabase({
       ? AbortSignal.timeout(timeoutMs)
       : undefined;
 
-  const restResponse = await fetchImpl(
-    `${baseUrl}/rest/v1/materials_catalog?select=id&limit=1`,
-    {
-      method: 'GET',
-      headers: {
-        apikey: apiKey,
-        Authorization: `Bearer ${apiKey}`,
-        Accept: 'application/json',
-      },
-      cache: 'no-store',
-      signal,
-    }
-  );
+  let restStatus = null;
 
-  if (!restResponse.ok) {
-    throw new Error(`Supabase REST keepalive failed with HTTP ${restResponse.status}`);
+  if (apiKey) {
+    const restResponse = await fetchImpl(
+      `${baseUrl}/rest/v1/materials_catalog?select=id&limit=1`,
+      {
+        method: 'GET',
+        headers: {
+          apikey: apiKey,
+          Authorization: `Bearer ${apiKey}`,
+          Accept: 'application/json',
+        },
+        cache: 'no-store',
+        signal,
+      }
+    );
+
+    if (!restResponse.ok) {
+      throw new Error(`Supabase REST keepalive failed with HTTP ${restResponse.status}`);
+    }
+    restStatus = restResponse.status;
   }
 
   let authStatus = null;
   try {
+    const authHeaders = apiKey ? { apikey: apiKey } : {};
     const authResponse = await fetchImpl(`${baseUrl}/auth/v1/health`, {
       method: 'GET',
-      headers: { apikey: apiKey },
+      headers: authHeaders,
       cache: 'no-store',
       signal,
     });
     authStatus = authResponse.status;
-  } catch {
-    // Non-fatal: REST query already hit PostgreSQL cleanly.
+  } catch (err) {
+    if (!apiKey) {
+      throw err;
+    }
+    // Non-fatal when authenticated REST query already succeeded.
+  }
+
+  if (!apiKey && (authStatus === null || authStatus >= 500)) {
+    throw new Error(`Supabase public health check failed with HTTP ${authStatus ?? 'network_error'}`);
   }
 
   return {
     ok: true,
     mode,
-    restStatus: restResponse.status,
+    restStatus,
     authStatus,
     checkedAt: new Date().toISOString(),
   };
@@ -178,4 +204,3 @@ export async function pingKeepaliveEndpoint({
     payload,
   };
 }
-

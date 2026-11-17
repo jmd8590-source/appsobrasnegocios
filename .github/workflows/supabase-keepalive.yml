@@ -2,18 +2,13 @@ name: Supabase Keepalive
 
 # Ejecuta una consulta ligera cada 3 días para evitar que Supabase suspenda el
 # proyecto gratuito tras 7 días de inactividad.
-#
-# Configura en GitHub -> Settings -> Secrets and variables -> Actions
-# (en Secrets o en Variables):
-#   - NEXT_PUBLIC_SUPABASE_URL
-#   - NEXT_PUBLIC_SUPABASE_ANON_KEY (y/o SUPABASE_SERVICE_ROLE_KEY en Secrets)
-# Opcional:
-#   - NEXT_PUBLIC_APP_URL (URL pública desplegada para verificar también /api/keepalive)
-#   - CRON_SECRET (en Secrets, si proteges /api/keepalive con Bearer token)
 on:
   schedule:
     - cron: '17 9 */3 * *'
   workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   keepalive:
@@ -31,8 +26,8 @@ jobs:
       - name: Run Supabase keepalive
         run: npm run keepalive
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || secrets.SUPABASE_URL || vars.SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || secrets.SUPABASE_URL || vars.SUPABASE_URL || 'https://rbtbxoupgwmyjghtwspm.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJidGJ4b3VwZ3dteWpnaHR3c3BtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNzEwMjMsImV4cCI6MjEwMjY0NzAyM30.rVPKEnKRUVKEI6uDrbHCFZYx2GsuDFQOgm33e5SEf1U' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || vars.NEXT_PUBLIC_APP_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
